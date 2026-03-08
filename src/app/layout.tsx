@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: "Личная коллекция фильмов, книг и игр. Отслеживай просмотренное, читаемое и пройденное.",
   keywords: ["коллекция", "фильмы", "книги", "игры", "медиатека", "трекер"],
   manifest: "/manifest.json",
+  icons: {
+  icon: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
