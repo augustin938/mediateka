@@ -28,6 +28,7 @@ export const users = pgTable("user", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("emailVerified").notNull().default(false),
+  pinnedItems: text("pinned_items").array().default([]),
   image: text("image"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -180,6 +181,26 @@ export const notifications = pgTable("notification", {
   link: text("link"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+
+export const tags = pgTable("tag", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#6366f1"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({
+  userTagIdx: uniqueIndex("tag_user_name_idx").on(t.userId, t.name),
+}));
+
+export const collectionItemTags = pgTable("collection_item_tag", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  collectionItemId: text("collection_item_id").notNull().references(() => collectionItems.id, { onDelete: "cascade" }),
+  tagId: text("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+}, (t) => ({
+  uniqueIdx: uniqueIndex("collection_item_tag_idx").on(t.collectionItemId, t.tagId),
+}));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

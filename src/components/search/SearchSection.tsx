@@ -149,9 +149,14 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
 
   const handleAddToCollection = (item: SearchResultItem) => {
     [setMovies, setBooks, setGames].forEach((setter) => {
-      setter((prev) => ({ ...prev, items: prev.items.map((r) => r.id === item.id ? { ...r, inCollection: true, collectionStatus: "WANT" } : r) }));
+      setter((prev) => ({ 
+        ...prev, 
+        items: prev.items.map((r) => r.id === item.id 
+          ? { ...r, inCollection: true, collectionStatus: item.collectionStatus ?? "WANT" } 
+          : r) 
+      }));
     });
-    if (selectedItem?.id === item.id) setSelectedItem({ ...item, inCollection: true, collectionStatus: "WANT" });
+    if (selectedItem?.id === item.id) setSelectedItem({ ...item, inCollection: true });
   };
 
   const activeFiltersCount = [typeFilter !== "all", yearFilter !== "", sortBy !== "relevance"].filter(Boolean).length;

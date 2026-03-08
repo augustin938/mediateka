@@ -2,7 +2,7 @@ import ProfileClient from "@/components/profile/ProfileClient";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { collectionItems, mediaItems } from "@/lib/db/schema";
+import { collectionItems, mediaItems, activityLogs, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -10,11 +10,15 @@ export default async function ProfilePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
 
-  const items = await db
-    .select()
-    .from(collectionItems)
-    .innerJoin(mediaItems, eq(collectionItems.mediaItemId, mediaItems.id))
-    .where(eq(collectionItems.userId, session.user.id));
+  const [items, activity, userRow] = await Promise.all([
+    db.select().from(collectionItems)
+      .innerJoin(mediaItems, eq(collectionItems.mediaItemId, mediaItems.id))
+      .where(eq(collectionItems.userId, session.user.id)),
+    db.select({ createdAt: activityLogs.createdAt })
+      .from(activityLogs)
+      .where(eq(activityLogs.userId, session.user.id)),
+    db.select().from(users).where(eq(users.id, session.user.id)).limit(1),
+  ]);
 
   const stats = {
     total: items.length,
@@ -31,6 +35,25 @@ export default async function ProfilePage() {
     })(),
   };
 
+  const activityByDay: Record<string, number> = {};
+  for (const a of activity) {
+    const day = new Date(a.createdAt).toISOString().slice(0, 10);
+    activityByDay[day] = (activityByDay[day] ?? 0) + 1;
+  }
+
+  const collection = items.map(({ collection_item, media_item }) => ({
+    collectionItemId: collection_item.id,
+    mediaItemId: media_item.id,
+    title: media_item.title,
+    posterUrl: media_item.posterUrl ?? null,
+    type: media_item.type,
+    year: media_item.year ?? null,
+    rating: collection_item.rating ?? null,
+    status: collection_item.status,
+  }));
+
+  const pinnedIds: string[] = (userRow[0] as any)?.pinnedItems ?? [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,6 +68,9 @@ export default async function ProfilePage() {
           image: (session.user as any).image ?? null,
         }}
         stats={stats}
+        activityByDay={activityByDay}
+        collection={collection}
+        initialPinnedIds={pinnedIds}
       />
     </div>
   );

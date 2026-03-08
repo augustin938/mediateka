@@ -3,14 +3,21 @@ import type { MediaItem, CollectionItem } from "@/lib/db/schema";
 export type MediaType = "movie" | "book" | "game";
 export type CollectionStatus = "WANT" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
 
-export interface SearchResultItem
-  extends Omit<MediaItem, "createdAt" | "updatedAt"> {
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface SearchResultItem extends Omit<MediaItem, "createdAt" | "updatedAt"> {
   inCollection?: boolean;
   collectionStatus?: CollectionStatus;
+  collectionItemId?: string | null;
 }
 
 export interface CollectionItemWithMedia extends CollectionItem {
   mediaItem: MediaItem;
+  tags?: Tag[];
 }
 
 export const STATUS_LABELS: Record<CollectionStatus, string> = {

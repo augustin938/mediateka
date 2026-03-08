@@ -25,6 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/random": "Сегодня",
   "/stats": "Статистика",
   "/profile": "Профиль",
+  "/tops": "Топы",
 };
 
 export default function DashboardTopbar() {
@@ -41,7 +42,6 @@ export default function DashboardTopbar() {
 
   const pageTitle = PAGE_TITLES[pathname] ?? "";
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
@@ -50,14 +50,12 @@ export default function DashboardTopbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Reset on route change
   useEffect(() => {
     setSearchOpen(false);
     setSearchQuery("");
     setSearchResults([]);
   }, [pathname]);
 
-  // Ctrl+K
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -71,7 +69,6 @@ export default function DashboardTopbar() {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
-  // Debounced search
   useEffect(() => {
     if (searchQuery.length < 2) { setSearchResults([]); return; }
     const timer = setTimeout(async () => {
@@ -93,13 +90,13 @@ export default function DashboardTopbar() {
         <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
       </div>
 
-      {/* Search bar — center */}
+      {/* Search bar */}
       <div ref={searchRef} className="flex-1 max-w-lg mx-auto relative">
         <div
           onClick={() => { setSearchOpen(true); inputRef.current?.focus(); }}
           className={cn(
             "flex items-center gap-2 border rounded-xl px-3 py-1.5 cursor-text transition-all duration-200",
-            searchOpen ? "border-primary/40 bg-background" : "border-border bg-muted/20 hover:border-primary/20"
+            searchOpen ? "border-primary/40 bg-card" : "border-border bg-muted/20 hover:border-primary/20"
           )}
         >
           <span className="text-muted-foreground text-sm">🔍</span>
@@ -108,6 +105,13 @@ export default function DashboardTopbar() {
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
+            onKeyDown={(e) => {
+            if (e.key === "Enter" && searchQuery.trim().length >= 2) {
+                setSearchOpen(false);
+                router.push(`/dashboard?q=${encodeURIComponent(searchQuery.trim())}`);
+                setSearchQuery("");
+            }
+            }}
             placeholder="Поиск... (Ctrl+K)"
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
           />
@@ -116,8 +120,7 @@ export default function DashboardTopbar() {
 
         {/* Results dropdown */}
         {searchOpen && searchQuery.length >= 2 && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden"
-            style={{ background: "var(--background)" }}>
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card">
             {searchResults.length > 0 ? (
               <>
                 <div className="p-2 space-y-1">
@@ -151,7 +154,11 @@ export default function DashboardTopbar() {
               </>
             ) : !searching ? (
               <div className="p-5 text-center text-sm text-muted-foreground">Ничего не найдено</div>
-            ) : null}
+            ) : (
+              <div className="p-5 text-center">
+                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+              </div>
+            )}
           </div>
         )}
       </div>
