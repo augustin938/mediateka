@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS } from "@/types";
 import NotificationsBell from "@/components/notifications/NotificationsBell";
@@ -16,21 +15,211 @@ interface SearchResult {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Поиск",
+  "/dashboard":       "Поиск",
   "/recommendations": "Для тебя",
-  "/collection": "Коллекция",
-  "/activity": "История",
-  "/achievements": "Достижения",
-  "/friends": "Друзья",
-  "/random": "Сегодня",
-  "/stats": "Статистика",
-  "/profile": "Профиль",
-  "/tops": "Топы",
+  "/collection":      "Коллекция",
+  "/quiz":            "Квиз",
+  "/activity":        "История",
+  "/achievements":    "Достижения",
+  "/friends":         "Друзья",
+  "/random":          "Сегодня",
+  "/stats":           "Статистика",
+  "/profile":         "Профиль",
+  "/tops":            "Топы",
 };
 
+// ── Themes ──────────────────────────────────────────────────────────────
+const THEMES = [
+  {
+    id: "dark",
+    label: "Тёмная",
+    emoji: "🌙",
+    vars: {
+      "--background": "224 30% 4%",
+      "--foreground": "210 40% 96%",
+      "--card": "224 28% 7%",
+      "--primary": "263 90% 68%",
+      "--muted": "224 24% 10%",
+      "--border": "224 24% 13%",
+    },
+  },
+  {
+    id: "light",
+    label: "Светлая",
+    emoji: "☀️",
+    vars: {
+      "--background": "0 0% 98%",
+      "--foreground": "222 47% 8%",
+      "--card": "0 0% 100%",
+      "--primary": "263 90% 58%",
+      "--muted": "220 14% 94%",
+      "--border": "220 14% 88%",
+    },
+  },
+  {
+    id: "midnight",
+    label: "Midnight",
+    emoji: "🔵",
+    preview: "from-blue-950 to-slate-950",
+    vars: {
+      "--background": "220 40% 4%",
+      "--foreground": "214 100% 95%",
+      "--card": "220 35% 8%",
+      "--primary": "210 100% 60%",
+      "--muted": "220 30% 10%",
+      "--border": "220 30% 14%",
+    },
+  },
+  {
+    id: "forest",
+    label: "Forest",
+    emoji: "🌿",
+    preview: "from-emerald-950 to-green-950",
+    vars: {
+      "--background": "150 30% 4%",
+      "--foreground": "140 40% 95%",
+      "--card": "150 25% 7%",
+      "--primary": "142 70% 50%",
+      "--muted": "150 20% 10%",
+      "--border": "150 20% 13%",
+    },
+  },
+  {
+    id: "sunset",
+    label: "Sunset",
+    emoji: "🌅",
+    preview: "from-orange-950 to-rose-950",
+    vars: {
+      "--background": "15 30% 4%",
+      "--foreground": "30 40% 96%",
+      "--card": "15 25% 7%",
+      "--primary": "25 95% 60%",
+      "--muted": "15 20% 10%",
+      "--border": "15 20% 13%",
+    },
+  },
+  {
+    id: "rose",
+    label: "Rose",
+    emoji: "🌸",
+    preview: "from-pink-950 to-rose-950",
+    vars: {
+      "--background": "340 25% 4%",
+      "--foreground": "340 30% 96%",
+      "--card": "340 20% 7%",
+      "--primary": "340 80% 65%",
+      "--muted": "340 15% 10%",
+      "--border": "340 15% 13%",
+    },
+  },
+] as const;
+
+type ThemeId = typeof THEMES[number]["id"];
+
+function applyTheme(id: ThemeId) {
+  const theme = THEMES.find((t) => t.id === id);
+  if (!theme) return;
+  const root = document.documentElement;
+
+  // Remove existing theme classes
+  THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
+  root.classList.add(`theme-${id}`);
+
+  // Apply dark/light class for Tailwind
+  if (id === "light") {
+    root.classList.remove("dark");
+  } else {
+    root.classList.add("dark");
+  }
+
+  // Apply CSS vars
+  Object.entries(theme.vars).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
+
+  localStorage.setItem("mediateka-theme", id);
+}
+
+function ThemePicker() {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState<ThemeId>("dark");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("mediateka-theme") as ThemeId | null;
+    if (saved) { setCurrent(saved); applyTheme(saved); }
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelect = (id: ThemeId) => {
+    setCurrent(id);
+    applyTheme(id);
+    setOpen(false);
+  };
+
+  const currentTheme = THEMES.find((t) => t.id === current) ?? THEMES[0];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Сменить тему"
+        className={cn(
+          "text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 w-8 h-8 rounded-lg flex items-center justify-center transition-all text-sm",
+          open && "border-primary/40 text-foreground bg-primary/10"
+        )}
+      >
+        {currentTheme.emoji}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-2xl z-50 p-3 min-w-[200px] animate-fade-in-scale">
+          <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Тема оформления</p>
+          <div className="space-y-1">
+            {THEMES.map((theme) => (
+              <button
+                key={theme.id}
+                onClick={() => handleSelect(theme.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all",
+                  current === theme.id
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <span className="text-base">{theme.emoji}</span>
+                <span className="font-medium">{theme.label}</span>
+                {/* Color dot preview */}
+                <div className="ml-auto flex gap-1">
+                  <div
+                    className="w-3 h-3 rounded-full border border-white/10"
+                    style={{ background: `hsl(${theme.vars["--primary"]})` }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full border border-white/10"
+                    style={{ background: `hsl(${theme.vars["--background"]})` }}
+                  />
+                </div>
+                {current === theme.id && <span className="text-primary text-xs">✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Topbar ───────────────────────────────────────────────────────────────────
 export default function DashboardTopbar() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,12 +274,11 @@ export default function DashboardTopbar() {
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-white/5 backdrop-blur-xl bg-background/80 flex items-center px-4 sm:px-6 gap-4">
-      {/* Page title */}
       <div className="flex-shrink-0 hidden sm:block">
         <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
       </div>
 
-      {/* Search bar */}
+      {/* Search */}
       <div ref={searchRef} className="flex-1 max-w-lg mx-auto relative">
         <div
           onClick={() => { setSearchOpen(true); inputRef.current?.focus(); }}
@@ -106,11 +294,11 @@ export default function DashboardTopbar() {
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
             onKeyDown={(e) => {
-            if (e.key === "Enter" && searchQuery.trim().length >= 2) {
+              if (e.key === "Enter" && searchQuery.trim().length >= 2) {
                 setSearchOpen(false);
                 router.push(`/dashboard?q=${encodeURIComponent(searchQuery.trim())}`);
                 setSearchQuery("");
-            }
+              }
             }}
             placeholder="Поиск... (Ctrl+K)"
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
@@ -118,7 +306,6 @@ export default function DashboardTopbar() {
           {searching && <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />}
         </div>
 
-        {/* Results dropdown */}
         {searchOpen && searchQuery.length >= 2 && (
           <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card">
             {searchResults.length > 0 ? (
@@ -146,7 +333,8 @@ export default function DashboardTopbar() {
                   ))}
                 </div>
                 <div className="border-t border-border p-2">
-                  <button onClick={() => { setSearchOpen(false); router.push(`/dashboard?q=${encodeURIComponent(searchQuery)}`); }}
+                  <button
+                    onClick={() => { setSearchOpen(false); router.push(`/dashboard?q=${encodeURIComponent(searchQuery)}`); }}
                     className="w-full text-xs text-muted-foreground hover:text-primary text-left px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors">
                     Все результаты для «{searchQuery}» →
                   </button>
@@ -166,13 +354,7 @@ export default function DashboardTopbar() {
       {/* Right actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <NotificationsBell />
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-          suppressHydrationWarning
-        >
-          {typeof window === "undefined" ? "🌙" : theme === "dark" ? "☀️" : "🌙"}
-        </button>
+        <ThemePicker />
       </div>
     </header>
   );

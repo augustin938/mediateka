@@ -1,5 +1,11 @@
 import ActivityClient from "@/components/activity/ActivityClient";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "История",
+  description: "Вся твоя активность — добавления, оценки и изменения",
+};
 export default function ActivityPage() {
   return (
     <div className="space-y-6">

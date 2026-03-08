@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
@@ -14,13 +15,21 @@ export async function GET() {
   return NextResponse.json({ tags: userTags });
 }
 
+
+const TagCreateSchema = z.object({
+  name:  z.string().min(1).max(30).trim(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
+});
+
 // POST — создать тег
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, color } = await req.json();
-  if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
+  const body = await req.json();
+  const parsed = TagCreateSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const { name, color } = parsed.data;
 
   try {
     const [tag] = await db.insert(tags).values({

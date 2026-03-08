@@ -50,7 +50,7 @@ export default function NotificationsBell() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 30000); // poll every 30s
+    const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -93,7 +93,7 @@ export default function NotificationsBell() {
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => { setOpen((o) => !o); if (!open && unread > 0) {} }}
+        onClick={() => setOpen((o) => !o)}
         className={cn(
           "relative text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all duration-200",
           open && "border-primary/30 text-foreground"
@@ -108,10 +108,12 @@ export default function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden"
-          style={{ background: "var(--background)" }}>
+        <div
+          className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden"
+          style={{ backgroundColor: "hsl(var(--card))" }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <h3 className="font-semibold text-foreground text-sm">Уведомления</h3>
             {unread > 0 && (
               <button onClick={markAllRead} className="text-xs text-primary hover:underline">
@@ -121,20 +123,24 @@ export default function NotificationsBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto bg-card">
             {notifs.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground space-y-2">
+              <div className="text-center py-10 text-muted-foreground space-y-2 bg-card">
                 <div className="text-3xl">🔕</div>
                 <p className="text-sm">Нет уведомлений</p>
               </div>
             ) : (
               notifs.map((n) => (
-                <div key={n.id}
+                <div
+                  key={n.id}
                   onClick={() => handleClick(n)}
                   className={cn(
-                    "flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors group border-b border-border/50 last:border-0",
-                    !n.read && "bg-primary/5"
-                  )}>
+                    "flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors group border-b border-border/50 last:border-0",
+                    !n.read
+                      ? "bg-primary/10 hover:bg-primary/15"
+                      : "bg-card hover:bg-muted/40"
+                  )}
+                >
                   <div className={cn(
                     "w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 mt-0.5",
                     !n.read ? "bg-primary/20" : "bg-muted/50"
@@ -142,7 +148,10 @@ export default function NotificationsBell() {
                     {TYPE_ICONS[n.type] ?? "🔔"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm leading-snug", !n.read ? "font-semibold text-foreground" : "text-foreground/80")}>
+                    <p className={cn(
+                      "text-sm leading-snug",
+                      !n.read ? "font-semibold text-foreground" : "text-foreground/80"
+                    )}>
                       {n.title}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{n.body}</p>

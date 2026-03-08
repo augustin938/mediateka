@@ -119,6 +119,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/(dashboard)/quiz/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/quiz">> = Specific
+  const handler = {} as typeof import("../../src/app/(dashboard)/quiz/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/(dashboard)/random/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/random">> = Specific
@@ -285,6 +294,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/profile">> = Specific
   const handler = {} as typeof import("../../src/app/api/profile/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/quiz/results/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/quiz/results">> = Specific
+  const handler = {} as typeof import("../../src/app/api/quiz/results/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/quiz/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/quiz">> = Specific
+  const handler = {} as typeof import("../../src/app/api/quiz/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

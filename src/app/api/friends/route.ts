@@ -1,3 +1,5 @@
+import { limits } from "@/lib/rate-limit";
+import { limits } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -42,6 +44,9 @@ export async function GET(req: NextRequest) {
 
 // POST — отправить заявку
 export async function POST(req: NextRequest) {
+  const { success } = limits.friends(req);
+  if (!success) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

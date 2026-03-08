@@ -15,6 +15,18 @@ interface CollectionEntry {
   status: string;
 }
 
+// ── NEW ──────────────────────────────────────────────────────────────────────
+interface QuizResult {
+  id: string;
+  mode: string;
+  category: string;
+  score: number;
+  total: number;
+  streak: number;
+  createdAt: string;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface Props {
   user: { id: string; name: string; email: string; image: string | null };
   stats: {
@@ -24,9 +36,26 @@ interface Props {
   activityByDay: Record<string, number>;
   collection: CollectionEntry[];
   initialPinnedIds: string[];
+  quizHistory: QuizResult[]; // NEW
 }
 
 const TYPE_ICONS: Record<string, string> = { movie: "🎬", book: "📚", game: "🎮" };
+
+// ── NEW helpers ───────────────────────────────────────────────────────────────
+const CAT_LABELS: Record<string, string> = { all: "Всё", movie: "Фильмы", book: "Книги", game: "Игры" };
+const MODE_LABELS: Record<string, string> = { classic: "🎯 Классик", endless: "♾️ Бесконечный" };
+const TIER_THRESHOLDS = [
+  { min: 90, label: "🏆 Легенда",  color: "text-amber-400" },
+  { min: 70, label: "🥇 Эксперт",  color: "text-yellow-400" },
+  { min: 50, label: "🎓 Знаток",   color: "text-green-400" },
+  { min: 30, label: "📚 Любитель", color: "text-blue-400" },
+  { min: 0,  label: "🌱 Новичок",  color: "text-muted-foreground" },
+];
+function getTier(score: number, total: number) {
+  const pct = total > 0 ? (score / total) * 100 : 0;
+  return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function Avatar({ image, name, size = 96 }: { image: string | null; name: string; size?: number }) {
   if (image) {
@@ -275,7 +304,100 @@ function PinnedMedia({ collection, initialPinnedIds }: { collection: CollectionE
   );
 }
 
-export default function ProfileClient({ user, stats, activityByDay, collection, initialPinnedIds }: Props) {
+// ── NEW ──────────────────────────────────────────────────────────────────────
+function QuizHistory({ results }: { results: QuizResult[] }) {
+  if (results.length === 0) {
+    return (
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <h3 className="font-display font-semibold text-foreground">🎮 Квиз</h3>
+        <div className="text-center py-6 text-muted-foreground space-y-2">
+          <p className="text-2xl">🎯</p>
+          <p className="text-sm">Ты ещё не проходил квиз</p>
+          <a href="/quiz" className="text-xs text-primary hover:underline">Попробовать →</a>
+        </div>
+      </div>
+    );
+  }
+
+  const bestClassic = results
+    .filter((r) => r.mode === "classic")
+    .reduce((best, r) => {
+      const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+      return pct > best ? pct : best;
+    }, 0);
+  const bestEndless  = results.filter((r) => r.mode === "endless").reduce((b, r) => r.score > b ? r.score : b, 0);
+  const totalGames   = results.length;
+  const bestStreak   = results.reduce((b, r) => r.streak > b ? r.streak : b, 0);
+
+  return (
+    <div className="glass rounded-2xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-semibold text-foreground">🎮 Квиз</h3>
+        <a href="/quiz"
+          className="text-xs text-primary hover:text-primary/80 border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/10 transition-all">
+          Играть →
+        </a>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { label: "Игр сыграно",    value: totalGames,           icon: "🎯" },
+          { label: "Лучшая серия",   value: `${bestStreak}`,      icon: "🔥" },
+          { label: "Лучший классик", value: `${bestClassic}%`,    icon: "🏆" },
+          { label: "Рекорд endless", value: `${bestEndless} оч.`, icon: "♾️" },
+        ].map((s) => (
+          <div key={s.label} className="bg-muted/30 rounded-xl p-3 text-center">
+            <p className="text-lg">{s.icon}</p>
+            <p className="font-bold text-foreground text-sm">{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Last 10 games */}
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Последние игры</p>
+        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          {results.slice(0, 10).map((r) => {
+            const pct  = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+            const tier = getTier(r.score, r.total);
+            const date = new Date(r.createdAt).toLocaleDateString("ru", { day: "numeric", month: "short" });
+            return (
+              <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/20 border border-border/30">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-muted/40 flex flex-col items-center justify-center">
+                  <span className="text-xs font-bold text-foreground leading-none">{r.score}</span>
+                  <span className="text-[9px] text-muted-foreground leading-none">/{r.total}</span>
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-muted-foreground">{MODE_LABELS[r.mode] ?? r.mode}</span>
+                    {r.category !== "all" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground">
+                        {CAT_LABELS[r.category] ?? r.category}
+                      </span>
+                    )}
+                    {r.streak >= 3 && <span className="text-[10px] text-orange-400">🔥 {r.streak}</span>}
+                  </div>
+                  <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-primary/60" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-right space-y-0.5">
+                  <p className={cn("text-xs font-semibold", tier.color)}>{tier.label.split(" ")[0]}</p>
+                  <p className="text-[10px] text-muted-foreground">{date}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function ProfileClient({ user, stats, activityByDay, collection, initialPinnedIds, quizHistory }: Props) {
   const [name, setName] = useState(user.name);
   const [image, setImage] = useState<string | null>(user.image);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -460,6 +582,9 @@ export default function ProfileClient({ user, stats, activityByDay, collection, 
               </button>
             </div>
           )}
+
+          {/* Quiz history */}
+          <QuizHistory results={quizHistory} />
         </div>
       </div>
     </div>

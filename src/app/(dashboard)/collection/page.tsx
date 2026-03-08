@@ -6,6 +6,12 @@ import { eq, desc } from "drizzle-orm";
 import CollectionClient from "@/components/collection/CollectionClient";
 import type { CollectionItemWithMedia } from "@/types";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Коллекция",
+  description: "Вся твоя коллекция фильмов, книг и игр",
+};
 export default async function CollectionPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return null;

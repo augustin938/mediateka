@@ -1,24 +1,49 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Медиатека — Личная коллекция",
-  description: "Каталогизируй свою коллекцию фильмов, книг и игр в одном месте",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Медиатека",
+    template: "%s · Медиатека",
+  },
+  description: "Личная коллекция фильмов, книг и игр. Отслеживай просмотренное, читаемое и пройденное.",
+  keywords: ["коллекция", "фильмы", "книги", "игры", "медиатека", "трекер"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Медиатека",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: "Медиатека",
+    title: "Медиатека — личная коллекция",
+    description: "Отслеживай фильмы, книги и игры в одном месте",
+  },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#060914" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -26,11 +51,7 @@ export default function RootLayout({
           <Toaster
             position="bottom-right"
             theme="system"
-            toastOptions={{
-              style: {
-                border: "1px solid rgba(255,255,255,0.1)",
-              },
-            }}
+            toastOptions={{ style: { border: "1px solid rgba(255,255,255,0.1)" } }}
           />
         </ThemeProvider>
       </body>

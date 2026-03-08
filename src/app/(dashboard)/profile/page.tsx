@@ -2,15 +2,21 @@ import ProfileClient from "@/components/profile/ProfileClient";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { collectionItems, mediaItems, activityLogs, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { collectionItems, mediaItems, activityLogs, users, quizResults } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Профиль",
+  description: "Настройки аккаунта и статистика",
+};
 export default async function ProfilePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
 
-  const [items, activity, userRow] = await Promise.all([
+  const [items, activity, userRow, quizRows] = await Promise.all([
     db.select().from(collectionItems)
       .innerJoin(mediaItems, eq(collectionItems.mediaItemId, mediaItems.id))
       .where(eq(collectionItems.userId, session.user.id)),
@@ -18,6 +24,10 @@ export default async function ProfilePage() {
       .from(activityLogs)
       .where(eq(activityLogs.userId, session.user.id)),
     db.select().from(users).where(eq(users.id, session.user.id)).limit(1),
+    db.select().from(quizResults)
+      .where(eq(quizResults.userId, session.user.id))
+      .orderBy(desc(quizResults.createdAt))
+      .limit(20),
   ]);
 
   const stats = {
@@ -54,6 +64,16 @@ export default async function ProfilePage() {
 
   const pinnedIds: string[] = (userRow[0] as any)?.pinnedItems ?? [];
 
+  const quizHistory = quizRows.map((r) => ({
+    id: r.id,
+    mode: r.mode,
+    category: r.category,
+    score: r.score,
+    total: r.total,
+    streak: r.streak,
+    createdAt: r.createdAt.toISOString(),
+  }));
+
   return (
     <div className="space-y-6">
       <div>
@@ -71,6 +91,7 @@ export default async function ProfilePage() {
         activityByDay={activityByDay}
         collection={collection}
         initialPinnedIds={pinnedIds}
+        quizHistory={quizHistory}
       />
     </div>
   );

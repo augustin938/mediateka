@@ -30,15 +30,16 @@ function Avatar({ image, name }: { image?: string | null; name: string }) {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Поиск", icon: "🔍" },
-  { href: "/recommendations", label: "Для тебя", icon: "🎯" },
-  { href: "/collection", label: "Коллекция", icon: "📚" },
-  { href: "/activity", label: "История", icon: "📅" },
-  { href: "/achievements", label: "Достижения", icon: "🏆" },
-  { href: "/friends", label: "Друзья", icon: "👥" },
-  { href: "/random", label: "Сегодня", icon: "🎲" },
-  { href: "/stats", label: "Статистика", icon: "📊" },
-  { href: "/tops", label: "Топы", icon: "🏆" },
+  { href: "/dashboard",       label: "Поиск",        icon: "🔍" },
+  { href: "/recommendations", label: "Для тебя",     icon: "🎯" },
+  { href: "/collection",      label: "Коллекция",    icon: "📚" },
+  { href: "/quiz",            label: "Квиз",         icon: "🎮" },
+  { href: "/activity",        label: "История",      icon: "📅" },
+  { href: "/achievements",    label: "Достижения",   icon: "🏆" },
+  { href: "/friends",         label: "Друзья",       icon: "👥" },
+  { href: "/random",          label: "Сегодня",      icon: "🎲" },
+  { href: "/stats",           label: "Статистика",   icon: "📊" },
+  { href: "/tops",            label: "Топы",         icon: "🥇" },
 ];
 
 export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
@@ -61,7 +62,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
     return () => window.removeEventListener("profile-updated", handler);
   }, []);
 
-  // Close mobile on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const handleSignOut = async () => {
@@ -70,11 +70,38 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
     router.push("/");
   };
 
-  const sidebarContent = (
+  const NavLink = ({ item, compact }: { item: typeof navItems[0]; compact?: boolean }) => {
+    const active = pathname === item.href;
+    return (
+      <Link
+        href={item.href}
+        title={compact ? item.label : undefined}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
+          active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+          compact && "justify-center px-2"
+        )}
+      >
+        <span className="text-base flex-shrink-0">{item.icon}</span>
+        {!compact && <span className="truncate">{item.label}</span>}
+        {active && !compact && (
+          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+        )}
+        {/* Tooltip for collapsed */}
+        {compact && (
+          <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-lg text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg">
+            {item.label}
+          </div>
+        )}
+      </Link>
+    );
+  };
+
+  const sidebarContent = (compact = false) => (
     <div className="flex flex-col h-full">
-      {/* Logo + collapse */}
-      <div className={cn("flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0", collapsed ? "justify-center" : "justify-between")}>
-        {!collapsed && (
+      {/* Logo */}
+      <div className={cn("flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0", compact ? "justify-center" : "justify-between")}>
+        {!compact && (
           <Link href="/dashboard" className="font-display text-lg font-bold text-gradient truncate">
             Медиатека
           </Link>
@@ -83,58 +110,43 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
           onClick={() => setCollapsed((c) => !c)}
           className="hidden lg:flex w-7 h-7 rounded-lg border border-white/10 hover:border-primary/30 items-center justify-center text-muted-foreground hover:text-foreground transition-all flex-shrink-0"
         >
-          {collapsed ? "→" : "←"}
+          {compact ? "→" : "←"}
         </button>
       </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => {
-          const active = pathname === item.href;
-          return (
-            <Link key={item.href} href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
-                active
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/5",
-                collapsed && "justify-center px-2"
-              )}>
-              <span className="text-base flex-shrink-0">{item.icon}</span>
-              {!collapsed && <span className="truncate">{item.label}</span>}
-              {active && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-              )}
-            </Link>
-          );
-        })}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+        {navItems.map((item) => <NavLink key={item.href} item={item} compact={compact} />)}
       </nav>
 
-      {/* Bottom: user */}
+      {/* User */}
       <div className="flex-shrink-0 p-3 border-t border-white/5 space-y-1">
-        <Link href="/profile"
+        <Link
+          href="/profile"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-white/5 group",
-            collapsed && "justify-center px-2"
-          )}>
+            compact && "justify-center px-2"
+          )}
+        >
           <div className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all flex-shrink-0">
             <Avatar image={user.image} name={user.name} />
           </div>
-          {!collapsed && (
+          {!compact && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
           )}
         </Link>
-        <button onClick={handleSignOut}
+        <button
+          onClick={handleSignOut}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all",
-            collapsed && "justify-center px-2"
-          )}>
+            compact && "justify-center px-2"
+          )}
+        >
           <span className="text-base flex-shrink-0">🚪</span>
-          {!collapsed && "Выйти"}
+          {!compact && "Выйти"}
         </button>
       </div>
     </div>
@@ -142,15 +154,15 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Desktop */}
       <aside className={cn(
         "hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300",
         collapsed ? "w-16" : "w-56"
       )}>
-        {sidebarContent}
+        {sidebarContent(collapsed)}
       </aside>
 
-      {/* Mobile: hamburger button (rendered in topbar via portal) */}
+      {/* Mobile FAB */}
       <button
         onClick={() => setMobileOpen(true)}
         className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center text-xl"
@@ -162,27 +174,13 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
       {mobileOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-white/10 lg:hidden flex flex-col">
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-white/10 lg:hidden flex flex-col animate-slide-in-right">
             <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
-              <Link href="/dashboard" className="font-display text-lg font-bold text-gradient">
-                Медиатека
-              </Link>
+              <Link href="/dashboard" className="font-display text-lg font-bold text-gradient">Медиатека</Link>
               <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground text-xl">✕</button>
             </div>
-            <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-              {navItems.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link key={item.href} href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                      active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                    )}>
-                    <span>{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <div className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+              {navItems.map((item) => <NavLink key={item.href} item={item} />)}
             </div>
             <div className="p-3 border-t border-white/5">
               <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all">

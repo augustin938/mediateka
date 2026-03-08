@@ -140,6 +140,17 @@ export const friendships = pgTable("friendship", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const quizResults = pgTable("quiz_result", {
+  id:         text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:     text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mode:       text("mode").notNull(), // "classic" | "endless"
+  category:   text("category").notNull().default("all"), // "all" | "movie" | "book" | "game"
+  score:      integer("score").notNull(),
+  total:      integer("total").notNull(),  // кол-во вопросов
+  streak:     integer("streak").notNull().default(0), // лучшая серия
+  createdAt:  timestamp("created_at").notNull().defaultNow(),
+});
+
 // ─── Activity Logs ────────────────────────────────────────────────────────────
 
 export const activityLogs = pgTable("activity_log", {

@@ -45,3 +45,45 @@ export const MEDIA_TYPE_ICONS: Record<MediaType, string> = {
   book: "📚",
   game: "🎮",
 };
+// ─── Quiz ──────────────────────────────────────────────────────────────────
+export type QuizMode     = "classic" | "endless";
+export type QuizCategory = "all" | "movie" | "book" | "game";
+
+export interface QuizResult {
+  id:        string;
+  mode:      QuizMode;
+  category:  QuizCategory;
+  score:     number;
+  total:     number;
+  streak:    number;
+  createdAt: string;
+}
+
+// ─── Friends ───────────────────────────────────────────────────────────────
+export interface FriendUser {
+  id:               string;
+  name:             string;
+  email:            string;
+  image:            string | null;
+  friendshipId?:    string | null;
+  friendshipStatus?: string | null;
+}
+
+export interface FriendEntry {
+  id:          string;
+  status:      string;
+  requesterId: string;
+  addresseeId: string;
+  other:       FriendUser;
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+export interface Notification {
+  id:        string;
+  type:      string;
+  title:     string;
+  body:      string;
+  read:      boolean;
+  link:      string | null;
+  createdAt: string;
+}

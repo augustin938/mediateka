@@ -6,6 +6,12 @@ import { collectionItems, mediaItems, activityLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Достижения",
+  description: "Твои достижения и прогресс в Медиатеке",
+};
 export default async function AchievementsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");

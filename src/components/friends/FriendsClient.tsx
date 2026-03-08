@@ -24,7 +24,10 @@ interface FriendEntry {
 
 function Avatar({ image, name, size = 40 }: { image?: string | null; name: string; size?: number }) {
   const initials = name?.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
-  if (image) return <img src={image} alt={name} className="w-full h-full object-cover" />;
+  if (image) return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={image} alt={name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+  );
   return (
     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/30 to-violet-600/30 text-white font-bold text-sm">
       {initials}

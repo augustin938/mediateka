@@ -2,6 +2,12 @@ import SearchSection from "@/components/search/SearchSection";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Поиск",
+  description: "Найди что-нибудь интересное для своей коллекции",
+};
 export default async function DashboardPage({
   searchParams,
 }: {
