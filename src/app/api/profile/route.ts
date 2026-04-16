@@ -1,5 +1,4 @@
 import { limits } from "@/lib/rate-limit";
-import { limits } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
