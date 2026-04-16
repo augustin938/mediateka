@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+function getEnvKey(name: string): string | null {
+  const raw = process.env[name];
+  if (!raw) return null;
+  // Handle values pasted with surrounding quotes in hosting panels.
+  return raw.trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -10,6 +17,8 @@ export async function GET(req: NextRequest) {
   const type = req.nextUrl.searchParams.get("type") ?? "all"; // movie | book | game | all
   const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
   const pageSize = 10;
+  const kinopoiskApiKey = getEnvKey("KINOPOISK_API_KEY") ?? getEnvKey("TMDB_API_KEY");
+  const rawgApiKey = getEnvKey("RAWG_API_KEY");
 
   if (!q || q.length < 2) return NextResponse.json({ results: [], hasMore: false });
 
@@ -17,12 +26,15 @@ export async function GET(req: NextRequest) {
   let hasMore = false;
 
   // Kinopoisk movies
-  if ((type === "all" || type === "movie") && process.env.KINOPOISK_API_KEY) {
+  if ((type === "all" || type === "movie") && kinopoiskApiKey) {
     try {
       const res = await fetch(
         `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(q)}&page=${page}`,
-        { headers: { "X-API-KEY": process.env.KINOPOISK_API_KEY }, cache: "no-store" }
+        { headers: { "X-API-KEY": kinopoiskApiKey }, cache: "no-store" }
       );
+      if (!res.ok) {
+        console.error("[search:movie] Kinopoisk response error", res.status);
+      }
       const data = await res.json();
       const films = data.films ?? [];
       if (data.pagesCount > page) hasMore = true;
@@ -44,7 +56,9 @@ export async function GET(req: NextRequest) {
           developer: null,
         });
       });
-    } catch {}
+    } catch (error) {
+      console.error("[search:movie] Kinopoisk request failed", error);
+    }
   }
 
   // OpenLibrary books
@@ -76,16 +90,21 @@ export async function GET(req: NextRequest) {
           developer: null,
         });
       });
-    } catch {}
+    } catch (error) {
+      console.error("[search:book] OpenLibrary request failed", error);
+    }
   }
 
   // RAWG games
-  if ((type === "all" || type === "game") && process.env.RAWG_API_KEY) {
+  if ((type === "all" || type === "game") && rawgApiKey) {
     try {
       const res = await fetch(
-        `https://api.rawg.io/api/games?key=${process.env.RAWG_API_KEY}&search=${encodeURIComponent(q)}&page_size=${pageSize}&page=${page}`,
+        `https://api.rawg.io/api/games?key=${rawgApiKey}&search=${encodeURIComponent(q)}&page_size=${pageSize}&page=${page}`,
         { cache: "no-store" }
       );
+      if (!res.ok) {
+        console.error("[search:game] RAWG response error", res.status);
+      }
       const data = await res.json();
       if (data.next) hasMore = true;
       (data.results ?? []).slice(0, pageSize).forEach((g: any) => {
@@ -106,7 +125,9 @@ export async function GET(req: NextRequest) {
           developer: null,
         });
       });
-    } catch {}
+    } catch (error) {
+      console.error("[search:game] RAWG request failed", error);
+    }
   }
 
   return NextResponse.json({ results, hasMore });

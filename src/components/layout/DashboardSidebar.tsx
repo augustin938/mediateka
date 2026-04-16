@@ -191,7 +191,19 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
             <div className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
               {navItems.map((item) => <NavLink key={item.href} item={item} />)}
             </div>
-            <div className="p-3 border-t border-white/5">
+            <div className="p-3 border-t border-white/5 space-y-1">
+              <Link
+                href="/profile"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-white/5 group"
+              >
+                <div className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all flex-shrink-0">
+                  <Avatar image={user.image} name={user.name} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+              </Link>
               <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all">
                 <span>🚪</span> Выйти
               </button>
