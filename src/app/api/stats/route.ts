@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { collectionItems, mediaItems, activityLogs } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { formatLocalMonthKey, formatRuMonthLabel } from "@/lib/date";
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -68,8 +69,8 @@ export async function GET(req: NextRequest) {
   const months = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
     return {
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleString("ru", { month: "short", year: "2-digit" }),
+      key: formatLocalMonthKey(d),
+      label: formatRuMonthLabel(d),
       added: 0,
       completed: 0,
     };
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
 
   activity.forEach((a) => {
     const d = new Date(a.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const key = formatLocalMonthKey(d);
     const m = months.find((m) => m.key === key);
     if (!m) return;
     if (a.action === "added") m.added++;

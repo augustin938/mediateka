@@ -145,7 +145,9 @@ export const quizResults = pgTable("quiz_result", {
   userId:     text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   mode:       text("mode").notNull(), // "classic" | "endless"
   category:   text("category").notNull().default("all"), // "all" | "movie" | "book" | "game"
-  score:      integer("score").notNull(),
+  score:      integer("score").notNull(), // legacy correct answers for old rows
+  points:     integer("points"),
+  correctAnswers: integer("correct_answers"),
   total:      integer("total").notNull(),  // кол-во вопросов
   streak:     integer("streak").notNull().default(0), // лучшая серия
   createdAt:  timestamp("created_at").notNull().defaultNow(),

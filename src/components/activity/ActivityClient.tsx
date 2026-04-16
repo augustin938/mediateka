@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime, getRelativeDayLabel } from "@/lib/date";
 import { MEDIA_TYPE_ICONS } from "@/types";
 
 interface ActivityLog {
@@ -25,31 +26,10 @@ const ACTION_CONFIG: Record<string, { label: string; icon: string; color: string
   want:      { label: "Хочет",      icon: "🔖", color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
 };
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "только что";
-  if (mins < 60) return `${mins} мин назад`;
-  if (hours < 24) return `${hours} ч назад`;
-  if (days < 7) return `${days} дн назад`;
-  return new Date(dateStr).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
-}
-
 function groupByDate(logs: ActivityLog[]) {
   const groups: Record<string, ActivityLog[]> = {};
   logs.forEach((log) => {
-    const date = new Date(log.createdAt);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let label: string;
-    if (date.toDateString() === today.toDateString()) label = "Сегодня";
-    else if (date.toDateString() === yesterday.toDateString()) label = "Вчера";
-    else label = date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
-
+    const label = getRelativeDayLabel(log.createdAt);
     if (!groups[label]) groups[label] = [];
     groups[label].push(log);
   });
@@ -180,7 +160,7 @@ export default function ActivityClient() {
                             {log.mediaType === "movie" ? "Фильм" : log.mediaType === "book" ? "Книга" : "Игра"}
                           </span>
                           <span className="text-xs text-muted-foreground/40">·</span>
-                          <span className="text-xs text-muted-foreground/60">{timeAgo(log.createdAt)}</span>
+                          <span className="text-xs text-muted-foreground/60">{formatRelativeTime(log.createdAt)}</span>
                         </div>
                       </div>
 

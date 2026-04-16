@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/date";
 
 interface Notification {
   id: string;
@@ -19,17 +20,6 @@ const TYPE_ICONS: Record<string, string> = {
   friend_accepted: "🤝",
   achievement: "🏆",
 };
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "только что";
-  if (mins < 60) return `${mins} мин назад`;
-  if (hours < 24) return `${hours} ч назад`;
-  return `${days} дн назад`;
-}
 
 export default function NotificationsBell() {
   const [notifs, setNotifs] = useState<Notification[]>([]);
@@ -155,7 +145,7 @@ export default function NotificationsBell() {
                       {n.title}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{n.body}</p>
-                    <p className="text-xs text-muted-foreground/50 mt-1">{timeAgo(n.createdAt)}</p>
+                    <p className="text-xs text-muted-foreground/50 mt-1">{formatRelativeTime(n.createdAt)}</p>
                   </div>
                   <button
                     onClick={(e) => deleteNotif(e, n.id)}

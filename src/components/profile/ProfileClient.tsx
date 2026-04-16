@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatLocalDateKey, formatRuShortDate } from "@/lib/date";
+import type { QuizResult } from "@/types";
 
 interface CollectionEntry {
   collectionItemId: string;
@@ -15,18 +17,6 @@ interface CollectionEntry {
   status: string;
 }
 
-// ── NEW ──────────────────────────────────────────────────────────────────────
-interface QuizResult {
-  id: string;
-  mode: string;
-  category: string;
-  score: number;
-  total: number;
-  streak: number;
-  createdAt: string;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface Props {
   user: { id: string; name: string; email: string; image: string | null };
   stats: {
@@ -36,7 +26,7 @@ interface Props {
   activityByDay: Record<string, number>;
   collection: CollectionEntry[];
   initialPinnedIds: string[];
-  quizHistory: QuizResult[]; // NEW
+  quizHistory: QuizResult[];
 }
 
 const TYPE_ICONS: Record<string, string> = { movie: "🎬", book: "📚", game: "🎮" };
@@ -51,8 +41,8 @@ const TIER_THRESHOLDS = [
   { min: 30, label: "📚 Любитель", color: "text-blue-400" },
   { min: 0,  label: "🌱 Новичок",  color: "text-muted-foreground" },
 ];
-function getTier(score: number, total: number) {
-  const pct = total > 0 ? (score / total) * 100 : 0;
+function getTier(correctAnswers: number, total: number) {
+  const pct = total > 0 ? (correctAnswers / total) * 100 : 0;
   return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,7 +73,7 @@ function ActivityCalendar({ activityByDay }: { activityByDay: Record<string, num
   let week: { date: Date; count: number }[] = [];
   const cur = new Date(start);
   while (cur <= today || week.length > 0) {
-    const dateStr = cur.toISOString().slice(0, 10);
+    const dateStr = formatLocalDateKey(cur);
     const isFuture = cur > today;
     week.push({ date: new Date(cur), count: isFuture ? -1 : (activityByDay[dateStr] ?? 0) });
     if (week.length === 7) { weeks.push(week); week = []; }
@@ -133,10 +123,13 @@ function ActivityCalendar({ activityByDay }: { activityByDay: Record<string, num
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-[640px]">
-          <div className="flex mb-1 ml-8">
+          <div className="relative mb-1 ml-8 h-4">
             {monthLabels.map((m, i) => (
-              <div key={i} className="text-xs text-muted-foreground"
-                style={{ position: "relative", left: `${m.col * 13}px`, marginRight: i < monthLabels.length - 1 ? 0 : "auto" }}>
+              <div
+                key={i}
+                className="absolute text-xs text-muted-foreground"
+                style={{ left: `${m.col * 13}px` }}
+              >
                 {m.label}
               </div>
             ))}
@@ -322,10 +315,10 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
   const bestClassic = results
     .filter((r) => r.mode === "classic")
     .reduce((best, r) => {
-      const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+      const pct = r.total > 0 ? Math.round((r.correctAnswers / r.total) * 100) : 0;
       return pct > best ? pct : best;
     }, 0);
-  const bestEndless  = results.filter((r) => r.mode === "endless").reduce((b, r) => r.score > b ? r.score : b, 0);
+  const bestEndless  = results.filter((r) => r.mode === "endless").reduce((b, r) => r.points > b ? r.points : b, 0);
   const totalGames   = results.length;
   const bestStreak   = results.reduce((b, r) => r.streak > b ? r.streak : b, 0);
 
@@ -360,14 +353,14 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Последние игры</p>
         <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
           {results.slice(0, 10).map((r) => {
-            const pct  = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
-            const tier = getTier(r.score, r.total);
-            const date = new Date(r.createdAt).toLocaleDateString("ru", { day: "numeric", month: "short" });
+            const pct  = r.total > 0 ? Math.round((r.correctAnswers / r.total) * 100) : 0;
+            const tier = getTier(r.correctAnswers, r.total);
+            const date = formatRuShortDate(new Date(r.createdAt));
             return (
               <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/20 border border-border/30">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-muted/40 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-foreground leading-none">{r.score}</span>
-                  <span className="text-[9px] text-muted-foreground leading-none">/{r.total}</span>
+                  <span className="text-xs font-bold text-foreground leading-none">{r.mode === "classic" ? r.correctAnswers : r.points}</span>
+                  <span className="text-[9px] text-muted-foreground leading-none">{r.mode === "classic" ? `/${r.total}` : "оч."}</span>
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -378,6 +371,9 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
                       </span>
                     )}
                     {r.streak >= 3 && <span className="text-[10px] text-orange-400">🔥 {r.streak}</span>}
+                    {r.mode === "endless" && (
+                      <span className="text-[10px] text-amber-400">⭐ {r.points}</span>
+                    )}
                   </div>
                   <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-primary/60" style={{ width: `${pct}%` }} />

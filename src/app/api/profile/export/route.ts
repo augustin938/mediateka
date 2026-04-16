@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { collectionItems, mediaItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { formatLocalDateKey, formatRuLongDate } from "@/lib/date";
 
 const STATUS_LABELS: Record<string, string> = {
   WANT: "Хочу",
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
       media_item.year ?? "",
       `"${(media_item.genres ?? []).join(", ")}"`,
       `"${(collection_item.review ?? "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
-      new Date(collection_item.addedAt).toLocaleDateString("ru-RU"),
+      formatRuLongDate(new Date(collection_item.addedAt)),
     ];
     return cols.join(",");
   });
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="mediateka_${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="mediateka_${formatLocalDateKey(new Date())}.csv"`,
     },
   });
 }

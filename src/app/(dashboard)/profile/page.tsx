@@ -2,16 +2,20 @@ import ProfileClient from "@/components/profile/ProfileClient";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { collectionItems, mediaItems, activityLogs, users, quizResults } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { collectionItems, mediaItems, activityLogs, users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { formatLocalDateKey } from "@/lib/date";
+import { getQuizResultsByUser } from "@/lib/quiz-results";
 
 import type { Metadata } from "next";
+import type { QuizResult } from "@/types";
 
 export const metadata: Metadata = {
   title: "Профиль",
   description: "Настройки аккаунта и статистика",
 };
+
 export default async function ProfilePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
@@ -24,10 +28,7 @@ export default async function ProfilePage() {
       .from(activityLogs)
       .where(eq(activityLogs.userId, session.user.id)),
     db.select().from(users).where(eq(users.id, session.user.id)).limit(1),
-    db.select().from(quizResults)
-      .where(eq(quizResults.userId, session.user.id))
-      .orderBy(desc(quizResults.createdAt))
-      .limit(20),
+    getQuizResultsByUser(session.user.id, 20),
   ]);
 
   const stats = {
@@ -47,7 +48,7 @@ export default async function ProfilePage() {
 
   const activityByDay: Record<string, number> = {};
   for (const a of activity) {
-    const day = new Date(a.createdAt).toISOString().slice(0, 10);
+    const day = formatLocalDateKey(new Date(a.createdAt));
     activityByDay[day] = (activityByDay[day] ?? 0) + 1;
   }
 
@@ -64,14 +65,15 @@ export default async function ProfilePage() {
 
   const pinnedIds: string[] = (userRow[0] as any)?.pinnedItems ?? [];
 
-  const quizHistory = quizRows.map((r) => ({
-    id: r.id,
-    mode: r.mode,
-    category: r.category,
-    score: r.score,
-    total: r.total,
-    streak: r.streak,
-    createdAt: r.createdAt.toISOString(),
+  const quizHistory: QuizResult[] = quizRows.map((r) => ({
+    id:             r.id,
+    mode:           r.mode as QuizResult["mode"],
+    category:       r.category as QuizResult["category"],
+    points:         r.points ?? r.correctAnswers ?? r.score,
+    correctAnswers: r.correctAnswers ?? r.score,
+    total:          r.total,
+    streak:         r.streak,
+    createdAt:      r.createdAt.toISOString(),
   }));
 
   return (

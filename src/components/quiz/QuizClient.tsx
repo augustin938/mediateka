@@ -175,7 +175,6 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
-          if (!answered) onAnswer("__timeout__", 0);
           return 0;
         }
         return t - 1;
@@ -198,6 +197,12 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.id]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && answered === null) {
+      onAnswer("__timeout__", 0);
+    }
+  }, [timeLeft, answered, onAnswer]);
 
   // Stop timer when answered
   useEffect(() => {
@@ -362,7 +367,8 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
 
 // ─── Results Screen ───────────────────────────────────────────────────────────
 interface ResultsProps {
-  score: number;
+  points: number;
+  correctAnswers: number;
   total: number;
   streak: number;
   mode: Mode;
@@ -372,7 +378,7 @@ interface ResultsProps {
   onSetup: () => void;
 }
 
-function ResultsScreen({ score, total, streak, mode, category, history, onRestart, onSetup }: ResultsProps) {
+function ResultsScreen({ points, correctAnswers, total, streak, mode, category, history, onRestart, onSetup }: ResultsProps) {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -380,21 +386,22 @@ function ResultsScreen({ score, total, streak, mode, category, history, onRestar
     fetch("/api/quiz/results", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, category, score, total, streak }),
+      body: JSON.stringify({ mode, category, points, correctAnswers, total, streak }),
     }).then(() => setSaved(true)).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const tier = getTier(score, total);
-  const pct  = total > 0 ? Math.round((score / total) * 100) : 0;
+  const tier = getTier(correctAnswers, total);
+  const pct  = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-lg mx-auto py-4">
       {/* Score card */}
       <div className="glass rounded-2xl p-6 text-center space-y-2">
-        <div className="text-5xl font-display font-black text-foreground">{score}<span className="text-2xl text-muted-foreground">/{total}</span></div>
+        <div className="text-5xl font-display font-black text-foreground">{correctAnswers}<span className="text-2xl text-muted-foreground">/{total}</span></div>
         <div className={cn("text-xl font-bold", tier.color)}>{tier.label}</div>
         <div className="text-sm text-muted-foreground">{pct}% правильных ответов</div>
+        <div className="text-sm text-amber-400 font-semibold">⭐ Очки: {points}</div>
         {streak >= 3 && <div className="text-sm text-orange-400">🔥 Лучшая серия: {streak}</div>}
         {mode === "endless" && <div className="text-xs text-muted-foreground">Бесконечный режим · {CAT_LABELS[category]}</div>}
         {saved && <div className="text-xs text-emerald-400 mt-1">✓ Результат сохранён</div>}
@@ -453,6 +460,7 @@ export default function QuizClient() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState<string | null>(null);
+  const correctAnswers = history.filter((item) => item.correct).length;
 
   const fetchQuestions = useCallback(async (m: Mode, cat: Cat, append = false) => {
     setLoading(true);
@@ -513,7 +521,7 @@ export default function QuizClient() {
 
   const handleNext = useCallback(() => {
     const q   = questions[qIndex];
-    const die = mode === "endless" && lives - (isCorrect ? 0 : 1) <= 0 && !isCorrect;
+    const die = mode === "endless" && lives <= 0 && !isCorrect;
     const end = mode === "classic" && qIndex + 1 >= questions.length;
 
     if (die || end) {
@@ -554,7 +562,7 @@ export default function QuizClient() {
   if (phase === "results") {
     return (
       <ResultsScreen
-        score={score} total={history.length} streak={bestStreak}
+        points={score} correctAnswers={correctAnswers} total={history.length} streak={bestStreak}
         mode={mode} category={category} history={history}
         onRestart={() => handleStart(mode, category)}
         onSetup={() => { setPhase("setup"); setError(null); }}

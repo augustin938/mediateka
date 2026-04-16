@@ -1,5 +1,4 @@
 import { limits } from "@/lib/rate-limit";
-import { limits } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -35,12 +34,16 @@ export async function GET(req: Request) {
     .innerJoin(mediaItems, eq(collectionItems.mediaItemId, mediaItems.id))
     .where(and(...conditions));
 
-  if (rows.length < 4) {
+  const filteredRows = category === "all"
+    ? rows
+    : rows.filter((row) => row.media_item.type === category);
+
+  if (filteredRows.length < 4) {
     return NextResponse.json({ error: "not_enough", min: 4 });
   }
 
-  const pool      = [...rows].sort(() => Math.random() - 0.5).slice(0, count);
-  const allTitles = rows.map((r) => r.media_item.title);
+  const pool      = [...filteredRows].sort(() => Math.random() - 0.5).slice(0, count);
+  const allTitles = filteredRows.map((r) => r.media_item.title);
 
   const questions = pool.map((row, i) => {
     const { media_item, collection_item } = row;
@@ -64,7 +67,7 @@ export async function GET(req: Request) {
     const getCreator = (r: typeof row) =>
       r.media_item.director ?? r.media_item.author ?? r.media_item.developer ?? null;
     const thisCreator   = getCreator(row);
-    const wrongCreators = rows.map(getCreator).filter((c): c is string => !!c && c !== thisCreator);
+    const wrongCreators = filteredRows.map(getCreator).filter((c): c is string => !!c && c !== thisCreator);
     const creatorOptions = thisCreator
       ? [...pick(wrongCreators, 3), thisCreator].sort(() => Math.random() - 0.5)
       : options;
@@ -72,7 +75,7 @@ export async function GET(req: Request) {
     // Genre options: wrong answers must NOT share all genres with the correct answer
     // Pick titles from rows whose genres don't overlap much with this item's genres
     const thisGenres = new Set((media_item.genres ?? []).map((g) => g.toLowerCase()));
-    const genreWrongTitles = rows
+    const genreWrongTitles = filteredRows
       .filter((r) => {
         if (r.media_item.title === media_item.title) return false;
         const otherGenres = (r.media_item.genres ?? []).map((g) => g.toLowerCase());
@@ -143,5 +146,5 @@ export async function GET(req: Request) {
     };
   });
 
-  return NextResponse.json({ questions, total: rows.length });
+  return NextResponse.json({ questions, total: filteredRows.length });
 }

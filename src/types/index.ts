@@ -50,13 +50,14 @@ export type QuizMode     = "classic" | "endless";
 export type QuizCategory = "all" | "movie" | "book" | "game";
 
 export interface QuizResult {
-  id:        string;
-  mode:      QuizMode;
-  category:  QuizCategory;
-  score:     number;
-  total:     number;
-  streak:    number;
-  createdAt: string;
+  id:             string;
+  mode:           QuizMode;
+  category:       QuizCategory;
+  points:         number;
+  correctAnswers: number;
+  total:          number;
+  streak:         number;
+  createdAt:      string;
 }
 
 // ─── Friends ───────────────────────────────────────────────────────────────

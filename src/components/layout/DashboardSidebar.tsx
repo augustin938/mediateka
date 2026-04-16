@@ -46,8 +46,11 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(initialUser);
-  const [collapsed, setCollapsed] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // expanded = hovered over the sidebar
+  const expanded = hovered;
 
   useEffect(() => { setUser(initialUser); }, [initialUser]);
 
@@ -87,7 +90,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         {active && !compact && (
           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
         )}
-        {/* Tooltip for collapsed */}
         {compact && (
           <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-lg text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg">
             {item.label}
@@ -100,18 +102,17 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
   const sidebarContent = (compact = false) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={cn("flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0", compact ? "justify-center" : "justify-between")}>
-        {!compact && (
-          <Link href="/dashboard" className="font-display text-lg font-bold text-gradient truncate">
+      <div className="flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/favicon.ico" alt="logo" className="w-6 h-6 flex-shrink-0" />
+          <span className={cn(
+            "font-display text-lg font-bold text-gradient whitespace-nowrap transition-all duration-300 overflow-hidden",
+            compact ? "w-0 opacity-0" : "w-auto opacity-100"
+          )}>
             Медиатека
-          </Link>
-        )}
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="hidden lg:flex w-7 h-7 rounded-lg border border-white/10 hover:border-primary/30 items-center justify-center text-muted-foreground hover:text-foreground transition-all flex-shrink-0"
-        >
-          {compact ? "→" : "←"}
-        </button>
+          </span>
+        </Link>
       </div>
 
       {/* Nav */}
@@ -154,12 +155,16 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop */}
-      <aside className={cn(
-        "hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300",
-        collapsed ? "w-16" : "w-56"
-      )}>
-        {sidebarContent(collapsed)}
+      {/* Desktop — hover to expand */}
+      <aside
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={cn(
+          "hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300 ease-in-out overflow-hidden",
+          expanded ? "w-56" : "w-16"
+        )}
+      >
+        {sidebarContent(!expanded)}
       </aside>
 
       {/* Mobile FAB */}
@@ -176,7 +181,11 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
           <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-white/10 lg:hidden flex flex-col animate-slide-in-right">
             <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
-              <Link href="/dashboard" className="font-display text-lg font-bold text-gradient">Медиатека</Link>
+              <Link href="/dashboard" className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/favicon.ico" alt="logo" className="w-6 h-6" />
+                <span className="font-display text-lg font-bold text-gradient">Медиатека</span>
+              </Link>
               <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground text-xl">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
