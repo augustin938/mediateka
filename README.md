@@ -220,6 +220,6 @@ vercel deploy --prod
 - **Google OAuth**: [console.cloud.google.com](https://console.cloud.google.com)
 - **GitHub OAuth**: [github.com/settings/developers](https://github.com/settings/developers)
 
-## Лицензия
-
-MIT
+____________________
+# Курсовая работа.
+## Карпов Никита 23м
