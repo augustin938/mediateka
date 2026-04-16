@@ -5,6 +5,11 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const trustedOrigins = [
+  process.env.BETTER_AUTH_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+].filter((origin): origin is string => Boolean(origin));
+
 export const auth = betterAuth({
   database: pool,
   emailAndPassword: {
@@ -28,7 +33,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
   },
-  trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
+  trustedOrigins,
   user: {
     fields: {
       email: "email",
