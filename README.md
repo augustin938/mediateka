@@ -17,7 +17,7 @@
 
 ## Возможности
 
-- 🔍 **Умный поиск** с debounce (400ms) по TMDB, OpenLibrary и RAWG одновременно
+- 🔍 **Умный поиск** с debounce (400ms) по kinopoisk, OpenLibrary и RAWG одновременно
 - 📋 **Статусы**: Хочу / В процессе / Завершено / Брошено
 - ⭐ **Оценки** от 1 до 10 + текстовый отзыв
 - 🔄 **Оптимистичные обновления** статусов без задержки
@@ -67,7 +67,7 @@ GITHUB_CLIENT_ID="..."
 GITHUB_CLIENT_SECRET="..."
 
 # API ключи
-TMDB_API_KEY="..."      # https://www.themoviedb.org/settings/api
+KINOPOISK_API_KEY="..."      # https://kinopoiskapiunofficial.tech/api
 RAWG_API_KEY="..."      # https://rawg.io/apidocs
 # OpenLibrary — бесплатно, ключ не нужен
 ```
@@ -214,7 +214,7 @@ vercel deploy --prod
 
 ## Получение API ключей
 
-- **TMDB**: [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) — бесплатно
+- **KinoPoisk**: [themoviedb.org/settings/api](https://kinopoiskapiunofficial.tech/api) — бесплатно
 - **RAWG**: [rawg.io/apidocs](https://rawg.io/apidocs) — бесплатно
 - **OpenLibrary**: не требует ключа
 - **Google OAuth**: [console.cloud.google.com](https://console.cloud.google.com)
