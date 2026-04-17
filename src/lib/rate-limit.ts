@@ -8,12 +8,13 @@ interface RateLimitEntry { count: number; resetTime: number; }
 const store = new Map<string, RateLimitEntry>();
 
 if (typeof setInterval !== "undefined") {
-  setInterval(() => {
+  const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store.entries()) {
       if (entry.resetTime < now) store.delete(key);
     }
   }, 5 * 60 * 1000);
+  cleanupInterval.unref?.();
 }
 
 export function rateLimit(req: Request, namespace: string, limit = 60, windowSec = 60) {

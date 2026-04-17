@@ -7,6 +7,7 @@ import { users, accounts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import { compare } from "bcryptjs";
 
 const scryptAsync = promisify(scrypt);
 
@@ -18,9 +19,9 @@ async function hashPassword(password: string): Promise<string> {
 
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
   try {
-    // Better Auth stores bcrypt hashes starting with $2
-    // We just allow the update if user provides something — Better Auth will validate on next login
-    if (stored.startsWith("$2")) return true;
+    // Better Auth stores bcrypt hashes starting with $2.
+    // We must verify them instead of allowing password change unconditionally.
+    if (stored.startsWith("$2")) return compare(password, stored);
 
     const [hashed, salt] = stored.split(".");
     if (!hashed || !salt) return false;

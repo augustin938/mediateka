@@ -66,12 +66,16 @@ export default function NotificationsBell() {
 
   const deleteNotif = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    await fetch(`/api/notifications/${id}`, { method: "DELETE" });
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
-    setUnread((prev) => {
-      const wasUnread = notifs.find((n) => n.id === id)?.read === false;
-      return wasUnread ? Math.max(0, prev - 1) : prev;
+    let removedUnread = false;
+    setNotifs((prev) => {
+      const target = prev.find((n) => n.id === id);
+      removedUnread = target?.read === false;
+      return prev.filter((n) => n.id !== id);
     });
+    await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+    if (removedUnread) {
+      setUnread((prev) => Math.max(0, prev - 1));
+    }
   };
 
   const handleClick = async (notif: Notification) => {
