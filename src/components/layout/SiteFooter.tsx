@@ -151,10 +151,10 @@ export default function SiteFooter() {
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-wide text-primary/90">Дополнительно</p>
             <p className="text-sm text-muted-foreground">
-              Если хочешь коллаб, предложения по UX или идею для фичи — пиши в Telegram.
+              Данное веб-приложение является проектом для курсовой работы.
             </p>
             <p className="text-xs text-muted-foreground/80">
-              Сделано с Next.js, Drizzle ORM и любовью к фильмам, книгам и играм.
+              Сделано с Next.js, Drizzle ORM.
             </p>
           </div>
         </div>
