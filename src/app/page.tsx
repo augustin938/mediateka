@@ -32,7 +32,7 @@ const DEMO_ITEMS = [
     year: 2022,
     status: "WANT",
     rating: null,
-    poster: "https://upload.wikimedia.org/wikipedia/en/5/53/Severance_TV_series.png",
+    poster: "https://m.media-amazon.com/images/M/MV5BZjA5MWM2NzEtY2QxOC00MzQ4LWE2ZWYtN2E2YTZkYjQxMDJmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
   },
 ];
 
