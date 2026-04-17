@@ -94,7 +94,9 @@ npm run db:studio
 npm run dev
 ```
 
-Открыть [http://localhost:3000](http://localhost:3000)
+Открыть:
+Локально - [http://localhost:3000](http://localhost:3000),
+На Vercel - [https://mediateka.vercel.app](https://mediateka.vercel.app/)
 
 ---
 
