@@ -5,6 +5,18 @@ import { db } from "@/lib/db";
 import { collectionItems, mediaItems } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
+type RecItem = {
+  title: string;
+  type: "movie" | "book" | "game";
+  year: number | null;
+  genres: string[];
+  posterUrl: string | null;
+  reason: string;
+  externalUrl: string | null;
+  externalId: string | null;
+  section: string;
+};
+
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
   let s = seed;
@@ -14,6 +26,18 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function typeLabel(type: "movie" | "book" | "game") {
+  if (type === "movie") return "фильм";
+  if (type === "book") return "книга";
+  return "игра";
+}
+
+function overlapScore(sourceGenres: string[], targetGenres: string[]) {
+  if (sourceGenres.length === 0 || targetGenres.length === 0) return 0;
+  const set = new Set(sourceGenres.map((g) => g.toLowerCase()));
+  return targetGenres.reduce((acc, g) => acc + (set.has(g.toLowerCase()) ? 1 : 0), 0);
 }
 
 export async function GET(req: NextRequest) {
@@ -58,9 +82,9 @@ export async function GET(req: NextRequest) {
     .map(([g]) => g);
 
   // Section buckets
-  const movies: any[] = [];
-  const books: any[] = [];
-  const games: any[] = [];
+  const movies: RecItem[] = [];
+  const books: RecItem[] = [];
+  const games: RecItem[] = [];
 
   const page = (seed % 4) + 1;
   const page2 = ((seed + 1) % 4) + 1;
@@ -230,10 +254,14 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  const moviePool = seededShuffle(dedupe(movies), seed);
+  const gamePool = seededShuffle(dedupe(games), seed + 1);
+  const bookPool = seededShuffle(dedupe(books), seed + 2);
+
   const allRecs = [
-    ...seededShuffle(dedupe(movies), seed),
-    ...seededShuffle(dedupe(games), seed + 1),
-    ...seededShuffle(dedupe(books), seed + 2),
+    ...moviePool,
+    ...gamePool,
+    ...bookPool,
   ];
 
   // Final dedupe across all types
@@ -245,8 +273,46 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
+  const completedTop = completed
+    .filter(({ collection_item, media_item }) => (collection_item.rating ?? 0) >= 8 && (media_item.genres?.length ?? 0) > 0)
+    .sort((a, b) => (b.collection_item.rating ?? 0) - (a.collection_item.rating ?? 0))
+    .slice(0, 4);
+
+  const poolsByType = {
+    movie: moviePool,
+    book: bookPool,
+    game: gamePool,
+  };
+
+  const usedCross = new Set<string>();
+  const crossRecommendations: RecItem[] = [];
+
+  completedTop.forEach(({ media_item }) => {
+    const sourceType = media_item.type as "movie" | "book" | "game";
+    const sourceGenres = media_item.genres ?? [];
+    const targets = (["movie", "book", "game"] as const).filter((t) => t !== sourceType);
+
+    targets.forEach((targetType) => {
+      const candidate = poolsByType[targetType]
+        .map((r) => ({ rec: r, score: overlapScore(sourceGenres, r.genres) }))
+        .filter(({ rec, score }) => score > 0 && !usedCross.has(`${rec.type}_${rec.title.toLowerCase().trim()}`))
+        .sort((a, b) => b.score - a.score)[0]?.rec;
+
+      if (!candidate) return;
+
+      const key = `${candidate.type}_${candidate.title.toLowerCase().trim()}`;
+      usedCross.add(key);
+      crossRecommendations.push({
+        ...candidate,
+        section: "Кросс-рекомендации",
+        reason: `Если понравился ${typeLabel(sourceType)} «${media_item.title}», попробуй ${typeLabel(targetType)} «${candidate.title}»`,
+      });
+    });
+  });
+
   return NextResponse.json({
     recommendations: final,
+    crossRecommendations: seededShuffle(crossRecommendations, seed + 17).slice(0, 10),
     meta: {
       topGenres: topGenres.slice(0, 5),
       typeCounts,
