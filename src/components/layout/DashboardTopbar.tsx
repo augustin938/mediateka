@@ -16,16 +16,16 @@ interface SearchResult {
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":       "Поиск",
-  "/recommendations": "Для тебя",
   "/collection":      "Коллекция",
-  "/quiz":            "Квиз",
-  "/activity":        "История",
-  "/achievements":    "Достижения",
-  "/friends":         "Друзья",
-  "/random":          "Сегодня",
-  "/stats":           "Статистика",
-  "/profile":         "Профиль",
+  "/recommendations": "Для тебя",
   "/tops":            "Топы",
+  "/quiz":            "Квиз",
+  "/random":          "Сегодня",
+  "/friends":         "Друзья",
+  "/achievements":    "Достижения",
+  "/stats":           "Статистика",
+  "/activity":        "История",
+  "/profile":         "Профиль",
 };
 
 // ── Themes ──────────────────────────────────────────────────────────────
