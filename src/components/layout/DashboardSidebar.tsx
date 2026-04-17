@@ -31,15 +31,15 @@ function Avatar({ image, name }: { image?: string | null; name: string }) {
 
 const navItems = [
   { href: "/dashboard",       label: "Поиск",        icon: "🔍" },
-  { href: "/recommendations", label: "Для тебя",     icon: "🎯" },
-  { href: "/collection",      label: "Коллекция",    icon: "📚" },
-  { href: "/quiz",            label: "Квиз",         icon: "🎮" },
-  { href: "/activity",        label: "История",      icon: "📅" },
-  { href: "/achievements",    label: "Достижения",   icon: "🏆" },
-  { href: "/friends",         label: "Друзья",       icon: "👥" },
-  { href: "/random",          label: "Сегодня",      icon: "🎲" },
-  { href: "/stats",           label: "Статистика",   icon: "📊" },
   { href: "/tops",            label: "Топы",         icon: "🥇" },
+  { href: "/collection",      label: "Коллекция",    icon: "📚" },
+  { href: "/recommendations", label: "Для тебя",     icon: "🎯" },
+  { href: "/random",          label: "Сегодня",      icon: "🎲" },
+  { href: "/friends",         label: "Друзья",       icon: "👥" },
+  { href: "/quiz",            label: "Квиз",         icon: "🎮" },
+  { href: "/achievements",    label: "Достижения",   icon: "🏆" },
+  { href: "/stats",           label: "Статистика",   icon: "📊" },
+  { href: "/activity",        label: "История",      icon: "📅" },
 ];
 
 export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
