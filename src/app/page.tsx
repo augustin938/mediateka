@@ -198,11 +198,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6 text-center text-sm text-muted-foreground">
-        <span className="font-display font-bold text-gradient">Медиатека</span>
-        {" "}— каталогизируй своё время.
-      </footer>
     </div>
   );
 }
