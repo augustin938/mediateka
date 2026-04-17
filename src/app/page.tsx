@@ -27,12 +27,12 @@ const DEMO_ITEMS = [
       "https://media.rawg.io/media/games/b54/b54598d1d5cc31899f4f0a7e3122a7b0.jpg",
   },
   {
-    title: "Severance",
+    title: "Interstellar",
     type: "🎬",
-    year: 2022,
+    year: 2014,
     status: "WANT",
     rating: null,
-    poster: "https://m.media-amazon.com/images/M/MV5BZjA5MWM2NzEtY2QxOC00MzQ4LWE2ZWYtN2E2YTZkYjQxMDJmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    poster: "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg",
   },
 ];
 
