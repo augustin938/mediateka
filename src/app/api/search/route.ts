@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const type = req.nextUrl.searchParams.get("type") ?? "all"; // movie | book | game | all
   const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
   const pageSize = 10;
-  const kinopoiskApiKey = getEnvKey("KINOPOISK_API_KEY") ?? getEnvKey("TMDB_API_KEY");
+  const kinopoiskApiKey = getEnvKey("KINOPOISK_API_KEY");
   const rawgApiKey = getEnvKey("RAWG_API_KEY");
 
   if (!q || q.length < 2) return NextResponse.json({ results: [], hasMore: false });

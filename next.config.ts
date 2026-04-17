@@ -3,7 +3,9 @@ const nextConfig = {
   // ── Images ────────────────────────────────────────────────────────────────
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "image.tmdb.org" },
+      { protocol: "https", hostname: "kinopoiskapiunofficial.tech" },
+      { protocol: "https", hostname: "st.kp.yandex.net" },
+      { protocol: "https", hostname: "avatars.mds.yandex.net" },
       { protocol: "https", hostname: "covers.openlibrary.org" },
       { protocol: "https", hostname: "images.igdb.com" },
       { protocol: "https", hostname: "cdn.cloudflare.steamstatic.com" },

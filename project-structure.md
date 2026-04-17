@@ -40,7 +40,7 @@ mediateka/
 │   │   ├── auth/
 │   │   │   └── index.ts              # Better Auth config
 │   │   ├── api/
-│   │   │   ├── tmdb.ts
+│   │   │   ├── kinopoisk.ts
 │   │   │   ├── openLibrary.ts
 │   │   │   └── rawg.ts
 │   │   └── validations/

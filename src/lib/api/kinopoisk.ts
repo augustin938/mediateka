@@ -3,7 +3,7 @@ import type { MediaItem } from "@/lib/db/schema";
 const KP_BASE = "https://kinopoiskapiunofficial.tech/api";
 const API_KEY = process.env.KINOPOISK_API_KEY;
 
-export async function searchTMDB(
+export async function searchKinopoisk(
   query: string
 ): Promise<Omit<MediaItem, "createdAt" | "updatedAt">[]> {
   if (!API_KEY) {

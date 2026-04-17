@@ -152,7 +152,7 @@ src/
     │   ├── index.ts       # Better Auth server config
     │   └── client.ts      # Better Auth client
     ├── api/
-    │   ├── tmdb.ts        # TMDB API
+    │   ├── kinopoisk.ts   # Kinopoisk API
     │   ├── openLibrary.ts # OpenLibrary API
     │   └── rawg.ts        # RAWG API
     └── validations/

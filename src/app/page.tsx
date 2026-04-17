@@ -7,7 +7,7 @@ const DEMO_ITEMS = [
     year: 2024,
     status: "COMPLETED",
     rating: 9,
-    poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
+    poster: "https://upload.wikimedia.org/wikipedia/en/5/52/Dune_Part_Two_poster.jpeg",
   },
   {
     title: "The Name of the Wind",
@@ -15,7 +15,7 @@ const DEMO_ITEMS = [
     year: 2007,
     status: "IN_PROGRESS",
     rating: null,
-    poster: null,
+    poster: "https://covers.openlibrary.org/b/id/14636645-L.jpg",
   },
   {
     title: "Elden Ring",
@@ -32,7 +32,7 @@ const DEMO_ITEMS = [
     year: 2022,
     status: "WANT",
     rating: null,
-    poster: "https://image.tmdb.org/t/p/w300/lh0aOvL93JgmUHVqhKEtYMPjhBM.jpg",
+    poster: "https://upload.wikimedia.org/wikipedia/en/5/53/Severance_TV_series.png",
   },
 ];
 
@@ -173,7 +173,7 @@ export default function LandingPage() {
               {
                 icon: "🔍",
                 title: "Умный поиск",
-                desc: "Ищи сразу по всем источникам — TMDB, OpenLibrary, RAWG. Находи нужное мгновенно.",
+                desc: "Ищи сразу по всем источникам — Kinopoisk, OpenLibrary, RAWG. Находи нужное мгновенно.",
               },
               {
                 icon: "📊",
