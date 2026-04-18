@@ -49,7 +49,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // expanded = hovered over the sidebar
+  // В десктопе сайдбар раскрывается при наведении.
   const expanded = hovered;
 
   useEffect(() => { setUser(initialUser); }, [initialUser]);
@@ -101,7 +101,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
   const sidebarContent = (compact = false) => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0">
         <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -115,12 +114,10 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         </Link>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
         {navItems.map((item) => <NavLink key={item.href} item={item} compact={compact} />)}
       </nav>
 
-      {/* User */}
       <div className="flex-shrink-0 p-3 border-t border-white/5 space-y-1">
         <Link
           href="/profile"
@@ -155,7 +152,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop — hover to expand */}
       <aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -167,7 +163,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         {sidebarContent(!expanded)}
       </aside>
 
-      {/* Mobile FAB */}
       <button
         onClick={() => setMobileOpen(true)}
         className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center text-xl"
@@ -175,7 +170,6 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         ☰
       </button>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />

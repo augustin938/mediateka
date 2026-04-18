@@ -25,7 +25,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<"WANT" | "IN_PROGRESS" | "COMPLETED" | "DROPPED">("WANT");
 
-  // Tags state
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [itemTags, setItemTags] = useState<Tag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(false);
@@ -34,7 +33,7 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
   const [showTagInput, setShowTagInput] = useState(false);
   const [collectionItemId, setCollectionItemId] = useState<string | null>(item.collectionItemId ?? null);
 
-  // Load tags if in collection
+  // Теги подгружаем только если элемент уже есть в коллекции.
   useEffect(() => {
     if (!item.inCollection) return;
     setTagsLoading(true);
@@ -117,7 +116,7 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
     setAllTags((prev) => [...prev, data.tag]);
     setNewTagName("");
     setShowTagInput(false);
-    // Auto-attach to item
+    // Новый тег сразу привязываем к текущему элементу.
     if (collectionItemId) {
       await fetch(`/api/collection/${collectionItemId}/tags`, {
         method: "POST",
@@ -142,7 +141,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
         </button>
 
         <div className="flex flex-col sm:flex-row gap-0 sm:gap-6 p-6">
-          {/* Poster */}
           <div className="w-full sm:w-36 flex-shrink-0">
             <div className="aspect-[2/3] sm:aspect-auto sm:h-52 bg-muted/50 rounded-xl overflow-hidden">
               {item.posterUrl
@@ -152,7 +150,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
             </div>
           </div>
 
-          {/* Info */}
           <div className="flex-1 space-y-4 mt-4 sm:mt-0">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -197,7 +194,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
           </div>
         </div>
 
-        {/* Bottom section */}
         <div className="px-6 pb-6 space-y-4 border-t border-white/5 pt-4">
           {item.inCollection ? (
             <>
@@ -213,7 +209,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                 )}
               </div>
 
-              {/* Tags section */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground/80">🏷 Теги</p>
@@ -223,7 +218,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                   </button>
                 </div>
 
-                {/* Create tag input */}
                 {showTagInput && (
                   <div className="flex items-center gap-2 p-3 bg-muted/20 rounded-xl">
                     <input value={newTagName} onChange={(e) => setNewTagName(e.target.value)}
@@ -244,7 +238,6 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                   </div>
                 )}
 
-                {/* All tags */}
                 {tagsLoading ? (
                   <div className="flex gap-1.5">
                     {[1,2,3].map((i) => <div key={i} className="h-6 w-16 bg-muted/40 rounded-full animate-pulse" />)}

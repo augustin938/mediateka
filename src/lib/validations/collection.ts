@@ -10,7 +10,7 @@ export const collectionStatusSchema = z.enum([
 export const addToCollectionSchema = z.object({
   mediaItemId: z.string().min(1),
   status: collectionStatusSchema.default("WANT"),
-  // Media item data to cache
+  // Поля медиа храним в кэше, чтобы не зависеть от повторных запросов во внешние API.
   externalId: z.string().min(1),
   type: z.enum(["movie", "book", "game"]),
   title: z.string().min(1),

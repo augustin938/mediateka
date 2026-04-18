@@ -19,8 +19,7 @@ async function hashPassword(password: string): Promise<string> {
 
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
   try {
-    // Better Auth stores bcrypt hashes starting with $2.
-    // We must verify them instead of allowing password change unconditionally.
+    // Хеши Better Auth начинаются с "$2", поэтому проверяем текущий пароль явно.
     if (stored.startsWith("$2")) return compare(password, stored);
 
     const [hashed, salt] = stored.split(".");
@@ -55,7 +54,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Пароль должен быть не менее 8 символов" }, { status: 400 });
     }
 
-    // Password is in accounts table
+    // Пароль хранится в таблице accounts, берем его оттуда для валидации.
     const [account] = await db
       .select({ password: accounts.password })
       .from(accounts)

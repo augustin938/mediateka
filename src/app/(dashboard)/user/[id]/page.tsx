@@ -20,7 +20,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   if (!profileUser) notFound();
 
-  // Check friendship
+  // Показываем чужую коллекцию только для подтвержденных друзей.
   const [friendship] = await db.select().from(friendships).where(
     or(
       and(eq(friendships.requesterId, session.user.id), eq(friendships.addresseeId, id)),
@@ -30,7 +30,6 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   const isFriend = friendship?.status === "accepted";
 
-  // Only show collection if friends
   const items = isFriend ? await db
     .select()
     .from(collectionItems)

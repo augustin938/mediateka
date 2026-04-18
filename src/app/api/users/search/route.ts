@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     ))
     .limit(10);
 
-  // Get existing friendships to show status
+  // Подмешиваем статус связи, чтобы в выдаче сразу показать доступное действие.
   const existing = await db.select().from(friendships).where(
     or(eq(friendships.requesterId, session.user.id), eq(friendships.addresseeId, session.user.id))
   );

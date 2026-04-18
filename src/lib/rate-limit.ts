@@ -1,13 +1,8 @@
-/**
- * lib/rate-limit.ts — простой in-memory rate limiter.
- * Использование: const { success } = limits.search(req);
- * if (!success) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
- */
-
 interface RateLimitEntry { count: number; resetTime: number; }
 const store = new Map<string, RateLimitEntry>();
 
 if (typeof setInterval !== "undefined") {
+  // Периодически очищаем устаревшие окна, чтобы Map не рос бесконечно.
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store.entries()) {

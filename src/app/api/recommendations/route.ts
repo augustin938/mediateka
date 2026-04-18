@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     .where(eq(collectionItems.userId, session.user.id));
   const collectionIds = new Set(allInCollection.map((i) => i.mediaItemId));
 
-  // Analyse collection
+  // Считаем предпочтения пользователя по жанрам и типам медиа.
   const genreCounts: Record<string, number> = {};
   const typeCounts: Record<string, number> = { movie: 0, book: 0, game: 0 };
   const topRated = completed
@@ -81,7 +81,6 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b[1] - a[1])
     .map(([g]) => g);
 
-  // Section buckets
   const movies: RecItem[] = [];
   const books: RecItem[] = [];
   const games: RecItem[] = [];
@@ -89,9 +88,8 @@ export async function GET(req: NextRequest) {
   const page = (seed % 4) + 1;
   const page2 = ((seed + 1) % 4) + 1;
 
-  // ── KINOPOISK ─────────────────────────────────────────────────────
   if (process.env.KINOPOISK_API_KEY) {
-    // 4 genre queries for more variety
+    // Делаем несколько жанровых запросов, чтобы рекомендации были разнообразнее.
     const movieGenreMap: Record<string, string> = {
       "драма": "драма", "комедия": "комедия", "триллер": "триллер",
       "фантастика": "фантастика", "боевик": "боевик", "мелодрама": "мелодрама",
@@ -141,7 +139,7 @@ export async function GET(req: NextRequest) {
       } catch (e) { console.error("Kinopoisk error:", e); }
     }
 
-    // Also fetch top films (popular)
+    // Дополнительно подмешиваем популярные фильмы.
     try {
       const r = await fetch(
         `https://kinopoiskapiunofficial.tech/api/v2.2/films?order=NUM_VOTE&type=ALL&page=${page}`,
@@ -167,11 +165,10 @@ export async function GET(req: NextRequest) {
     } catch (e) { console.error("Kinopoisk top error:", e); }
   }
 
-  // ── RAWG ──────────────────────────────────────────────────────────
   if (process.env.RAWG_API_KEY) {
     const orderings = ["-rating", "-added", "-released", "-metacritic"];
 
-    // 3 different pages/orderings for variety
+    // Берем разные сортировки и страницы для более широкого охвата.
     const rawgFetches = [
       { ordering: orderings[seed % 4], page: page, section: "Топ игр" },
       { ordering: orderings[(seed + 1) % 4], page: page2, section: "Новые игры" },
@@ -205,7 +202,6 @@ export async function GET(req: NextRequest) {
     }));
   }
 
-  // ── OPENLIBRARY ───────────────────────────────────────────────────
   const bookGenres = [
     topGenres[seed % Math.max(topGenres.length, 1)] ?? "fiction",
     topGenres[(seed + 1) % Math.max(topGenres.length, 1)] ?? "adventure",
@@ -243,7 +239,7 @@ export async function GET(req: NextRequest) {
     } catch (e) { console.error("OpenLibrary error:", e); }
   }));
 
-  // Dedupe each bucket
+  // Убираем дубли внутри каждого типа рекомендаций.
   function dedupe(arr: any[]): any[] {
     const seen = new Set<string>();
     return arr.filter((r) => {
@@ -264,7 +260,7 @@ export async function GET(req: NextRequest) {
     ...bookPool,
   ];
 
-  // Final dedupe across all types
+  // И еще раз удаляем повторы после объединения всех списков.
   const finalSeen = new Set<string>();
   const final = allRecs.filter((r) => {
     const key = `${r.type}_${r.title.toLowerCase().trim()}`;

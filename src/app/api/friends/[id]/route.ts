@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Notify requester if accepted
+  // При принятии заявки уведомляем инициатора.
   if (status === "accepted") {
     const [accepter] = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id));
     await db.insert(notifications).values({

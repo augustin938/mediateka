@@ -40,7 +40,7 @@ export default function TopsClient() {
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null);
   const [collectionIds, setCollectionIds] = useState<Set<string>>(new Set());
 
-  // Load collection ids to show checkmarks
+  // Загружаем id элементов коллекции, чтобы помечать уже добавленные карточки.
   useEffect(() => {
     fetch("/api/collection")
       .then((r) => r.json())
@@ -103,7 +103,6 @@ export default function TopsClient() {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
         {TABS.map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -119,14 +118,12 @@ export default function TopsClient() {
         ))}
       </div>
 
-      {/* List */}
       <div className="space-y-2">
         {items.map((item, index) => (
             <div key={`${item.id}_${index}`}
             onClick={() => handleCardClick(item)}
             className="glass rounded-2xl p-3 flex items-center gap-4 hover:border-primary/20 cursor-pointer transition-all group">
 
-            {/* Rank */}
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-sm flex-shrink-0",
               item.rank <= 3 ? RANK_BG[item.rank - 1] : "bg-muted/30"
@@ -136,7 +133,6 @@ export default function TopsClient() {
               </span>
             </div>
 
-            {/* Poster */}
             <div className="w-10 h-14 rounded-lg overflow-hidden bg-muted/50 flex-shrink-0">
               {item.posterUrl
                 // eslint-disable-next-line @next/next/no-img-element
@@ -146,7 +142,6 @@ export default function TopsClient() {
                   </div>}
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
                 {item.title}
@@ -165,7 +160,6 @@ export default function TopsClient() {
               </div>
             </div>
 
-            {/* Rating + collection status */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {item.rating && (
                 <div className="flex items-center gap-1">
@@ -183,7 +177,6 @@ export default function TopsClient() {
           </div>
         ))}
 
-        {/* Loading skeletons */}
         {loading && Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="glass rounded-2xl p-3 flex items-center gap-4 animate-pulse">
             <div className="w-10 h-10 rounded-xl bg-muted/50 flex-shrink-0" />
@@ -196,7 +189,6 @@ export default function TopsClient() {
         ))}
       </div>
 
-      {/* Load more */}
       {!loading && page < totalPages && (
         <div className="flex justify-center pt-2">
           <button onClick={() => setPage((p) => p + 1)}

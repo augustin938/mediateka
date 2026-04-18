@@ -28,7 +28,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile":         "Профиль",
 };
 
-// ── Themes ──────────────────────────────────────────────────────────────
 const THEMES = [
   {
     id: "dark",
@@ -121,18 +120,18 @@ function applyTheme(id: ThemeId) {
   if (!theme) return;
   const root = document.documentElement;
 
-  // Remove existing theme classes
+  // Снимаем предыдущую тему перед применением новой.
   THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
   root.classList.add(`theme-${id}`);
 
-  // Apply dark/light class for Tailwind
+  // Переключаем класс `dark`, чтобы Tailwind корректно применил палитру.
   if (id === "light") {
     root.classList.remove("dark");
   } else {
     root.classList.add("dark");
   }
 
-  // Apply CSS vars
+  // Обновляем CSS-переменные выбранной темы.
   Object.entries(theme.vars).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
@@ -196,7 +195,6 @@ function ThemePicker() {
               >
                 <span className="text-base">{theme.emoji}</span>
                 <span className="font-medium">{theme.label}</span>
-                {/* Color dot preview */}
                 <div className="ml-auto flex gap-1">
                   <div
                     className="w-3 h-3 rounded-full border border-white/10"
@@ -217,7 +215,6 @@ function ThemePicker() {
   );
 }
 
-// ── Topbar ───────────────────────────────────────────────────────────────────
 export default function DashboardTopbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -278,7 +275,6 @@ export default function DashboardTopbar() {
         <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
       </div>
 
-      {/* Search */}
       <div ref={searchRef} className="flex-1 max-w-lg mx-auto relative">
         <div
           onClick={() => { setSearchOpen(true); inputRef.current?.focus(); }}
@@ -351,7 +347,6 @@ export default function DashboardTopbar() {
         )}
       </div>
 
-      {/* Right actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <NotificationsBell />
         <ThemePicker />

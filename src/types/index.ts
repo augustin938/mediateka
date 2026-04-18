@@ -45,7 +45,6 @@ export const MEDIA_TYPE_ICONS: Record<MediaType, string> = {
   book: "📚",
   game: "🎮",
 };
-// ─── Quiz ──────────────────────────────────────────────────────────────────
 export type QuizMode     = "classic" | "endless";
 export type QuizCategory = "all" | "movie" | "book" | "game";
 
@@ -60,7 +59,6 @@ export interface QuizResult {
   createdAt:      string;
 }
 
-// ─── Friends ───────────────────────────────────────────────────────────────
 export interface FriendUser {
   id:               string;
   name:             string;
@@ -78,7 +76,6 @@ export interface FriendEntry {
   other:       FriendUser;
 }
 
-// ─── Notifications ─────────────────────────────────────────────────────────
 export interface Notification {
   id:        string;
   type:      string;

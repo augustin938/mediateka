@@ -32,7 +32,6 @@ const QuizResultSchema = z.object({
   path: ["correctAnswers"],
 });
 
-// POST — save result
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,14 +57,13 @@ export async function POST(req: Request) {
   return NextResponse.json({ result });
 }
 
-// GET — last 20 results for profile
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const results = await getQuizResultsByUser(session.user.id, 20);
 
-  // compute best score per mode
+  // Для каждого режима считаем лучший результат, чтобы не зависеть от сортировки.
   const best = results.reduce((acc, r) => {
     const correct = getCorrectAnswers(r);
     const points = getPoints(r);

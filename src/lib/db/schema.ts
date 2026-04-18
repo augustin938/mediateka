@@ -10,8 +10,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
 export const mediaTypeEnum = pgEnum("media_type", ["movie", "book", "game"]);
 
 export const collectionStatusEnum = pgEnum("collection_status", [
@@ -20,8 +18,6 @@ export const collectionStatusEnum = pgEnum("collection_status", [
   "COMPLETED",
   "DROPPED",
 ]);
-
-// ─── Better Auth Required Tables ─────────────────────────────────────────────
 
 export const users = pgTable("user", {
   id: text("id").primaryKey(),
@@ -74,8 +70,6 @@ export const verifications = pgTable("verification", {
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
-// ─── Media Items (cached from external APIs) ─────────────────────────────────
-
 export const mediaItems = pgTable(
   "media_item",
   {
@@ -100,8 +94,6 @@ export const mediaItems = pgTable(
     externalIdx: uniqueIndex("media_item_external_idx").on(t.externalId, t.type),
   })
 );
-
-// ─── Collection Items ─────────────────────────────────────────────────────────
 
 export const collectionItems = pgTable(
   "collection_item",
@@ -129,8 +121,6 @@ export const collectionItems = pgTable(
   })
 );
 
-// ─── Friendships ──────────────────────────────────────────────────────────────
-
 export const friendships = pgTable("friendship", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   requesterId: text("requester_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -143,17 +133,15 @@ export const friendships = pgTable("friendship", {
 export const quizResults = pgTable("quiz_result", {
   id:         text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId:     text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  mode:       text("mode").notNull(), // "classic" | "endless"
-  category:   text("category").notNull().default("all"), // "all" | "movie" | "book" | "game"
-  score:      integer("score").notNull(), // legacy correct answers for old rows
+  mode:       text("mode").notNull(), // Режим квиза: classic или endless.
+  category:   text("category").notNull().default("all"), // Фильтр категории: all/movie/book/game.
+  score:      integer("score").notNull(), // Поле оставлено для обратной совместимости старых записей.
   points:     integer("points"),
   correctAnswers: integer("correct_answers"),
-  total:      integer("total").notNull(),  // кол-во вопросов
-  streak:     integer("streak").notNull().default(0), // лучшая серия
+  total:      integer("total").notNull(), // Количество вопросов в попытке.
+  streak:     integer("streak").notNull().default(0), // Лучшая серия правильных ответов.
   createdAt:  timestamp("created_at").notNull().defaultNow(),
 });
-
-// ─── Activity Logs ────────────────────────────────────────────────────────────
 
 export const activityLogs = pgTable("activity_log", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -166,8 +154,6 @@ export const activityLogs = pgTable("activity_log", {
   details: text("details"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
-
-// ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
   collectionItems: many(collectionItems),
@@ -187,15 +173,13 @@ export const collectionItemsRelations = relations(collectionItems, ({ one }) => 
 export const notifications = pgTable("notification", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(), // "friend_request" | "friend_accepted" | "achievement"
+  type: text("type").notNull(), // Тип уведомления: заявка, подтверждение или достижение.
   title: text("title").notNull(),
   body: text("body").notNull(),
   read: boolean("read").notNull().default(false),
   link: text("link"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
-
-// ─── Tags ─────────────────────────────────────────────────────────────────────
 
 export const tags = pgTable("tag", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -214,8 +198,6 @@ export const collectionItemTags = pgTable("collection_item_tag", {
 }, (t) => ({
   uniqueIdx: uniqueIndex("collection_item_tag_idx").on(t.collectionItemId, t.tagId),
 }));
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;

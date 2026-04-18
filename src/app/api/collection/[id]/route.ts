@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     posterUrl: existing.media_item.posterUrl,
   };
 
-  // Log what changed
+  // Логируем только реально переданные изменения.
   if (status) {
     const actionMap: Record<string, string> = {
       WANT: "want", IN_PROGRESS: "started", COMPLETED: "completed", DROPPED: "dropped",

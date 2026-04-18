@@ -49,7 +49,6 @@ const STATUS_OPTIONS: Record<string, { value: string; label: string; color: stri
   ],
 };
 
-// ─── ADD MODAL ────────────────────────────────────────────────────────────────
 function AddModal({
   rec,
   onConfirm,
@@ -64,7 +63,7 @@ function AddModal({
   const statusOpts = STATUS_OPTIONS[rec.type] ?? STATUS_OPTIONS.movie;
   const typeLabel = rec.type === "movie" ? "Фильм" : rec.type === "book" ? "Книга" : "Игра";
 
-  // Close on Escape
+  // Закрываем модалку по Escape, чтобы не требовать клика мышью.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -78,7 +77,6 @@ function AddModal({
         className="relative glass rounded-2xl w-full max-w-sm overflow-hidden animate-fade-in-scale shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Poster header */}
         <div className="relative h-40 bg-muted/30 overflow-hidden">
           {rec.posterUrl
             // eslint-disable-next-line @next/next/no-img-element
@@ -99,7 +97,6 @@ function AddModal({
           </div>
         </div>
 
-        {/* Genres + reason */}
         <div className="px-4 pt-3 pb-1 space-y-2">
           {rec.genres.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -113,7 +110,6 @@ function AddModal({
           </p>
         </div>
 
-        {/* Status buttons */}
         <div className="p-4 space-y-2">
           <p className="text-xs font-medium text-muted-foreground mb-2">Добавить со статусом:</p>
           {statusOpts.map((opt) => (
@@ -146,7 +142,6 @@ function AddModal({
   );
 }
 
-// ─── CARD ─────────────────────────────────────────────────────────────────────
 function RecCard({ rec, index, onOpenModal }: {
   rec: Recommendation;
   index: number;
@@ -157,7 +152,6 @@ function RecCard({ rec, index, onOpenModal }: {
       className="flex-shrink-0 w-[190px] glass rounded-xl overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20 transition-all duration-300 flex flex-col cursor-pointer"
       onClick={() => onOpenModal(rec)}
     >
-      {/* Poster */}
       <div className="relative h-[260px] bg-muted/30 overflow-hidden flex-shrink-0">
         {rec.posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -180,7 +174,6 @@ function RecCard({ rec, index, onOpenModal }: {
           </div>
         )}
 
-        {/* "+" button — always visible on hover */}
         <button
           onClick={(e) => { e.stopPropagation(); onOpenModal(rec); }}
           className="absolute bottom-2 right-2 w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:shadow-primary/40"
@@ -190,13 +183,11 @@ function RecCard({ rec, index, onOpenModal }: {
           </svg>
         </button>
 
-        {/* Title at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
           <p className="text-white text-xs font-bold leading-tight line-clamp-2 font-display">{rec.title}</p>
         </div>
       </div>
 
-      {/* Info only — no action buttons */}
       <div className="p-2.5 flex flex-col gap-1.5 flex-1">
         {rec.genres.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -213,7 +204,6 @@ function RecCard({ rec, index, onOpenModal }: {
   );
 }
 
-// ─── ROW ──────────────────────────────────────────────────────────────────────
 function RecRow({ title, icon, items, onOpenModal }: {
   title: string;
   icon: string;
@@ -252,7 +242,6 @@ function RecRow({ title, icon, items, onOpenModal }: {
   );
 }
 
-// ─── HERO BANNER (single type tab) ───────────────────────────────────────────
 function HeroBanner({ rec, onOpenModal }: { rec: Recommendation; onOpenModal: (rec: Recommendation) => void }) {
   const typeLabel = rec.type === "movie" ? "Фильм" : rec.type === "book" ? "Книга" : "Игра";
   return (
@@ -299,7 +288,6 @@ function HeroBanner({ rec, onOpenModal }: { rec: Recommendation; onOpenModal: (r
   );
 }
 
-// ─── HERO CAROUSEL ("Все" tab) ────────────────────────────────────────────────
 const CAROUSEL_INTERVAL = 5000;
 
 function HeroCarousel({
@@ -324,6 +312,7 @@ function HeroCarousel({
 
   const resetTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    // После ручного переключения перезапускаем автопрокрутку с нуля.
     timerRef.current = setInterval(() => setIdx((p) => (p + 1) % slides.length), CAROUSEL_INTERVAL);
   };
 
@@ -340,7 +329,6 @@ function HeroCarousel({
 
   return (
     <div className="relative rounded-2xl overflow-hidden glass h-64 md:h-80 group cursor-pointer" onClick={() => onOpenModal(rec)}>
-      {/* Background image with transition */}
       {slides.map((s, i) => (
         s.posterUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -361,7 +349,6 @@ function HeroCarousel({
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
 
-      {/* Content */}
       <div className="absolute inset-0 p-6 flex flex-col justify-end max-w-lg">
         <div className="space-y-2 mb-4 animate-fade-in" key={idx}>
           <div className="flex items-center gap-2">
@@ -390,7 +377,6 @@ function HeroCarousel({
         </button>
       </div>
 
-      {/* Dots */}
       {slides.length > 1 && (
         <div className="absolute bottom-4 right-5 flex gap-1.5">
           {slides.map((s, i) => (
@@ -408,7 +394,6 @@ function HeroCarousel({
         </div>
       )}
 
-      {/* Type indicators top-right */}
       <div className="absolute top-4 right-4 flex gap-1.5">
         {slides.map((s, i) => (
           <button
@@ -427,7 +412,6 @@ function HeroCarousel({
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function RecommendationsClient() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [crossRecs, setCrossRecs] = useState<Recommendation[]>([]);
@@ -529,11 +513,11 @@ export default function RecommendationsClient() {
     game:  recs.filter((r) => r.type === "game").length,
   };
 
-  // First item with poster per type — for carousel
+  // Для карусели берем по одному элементу с постером на каждый тип.
   const featuredMovie = recs.find((r) => r.type === "movie" && r.posterUrl) ?? null;
   const featuredBook  = recs.find((r) => r.type === "book"  && r.posterUrl) ?? null;
   const featuredGame  = recs.find((r) => r.type === "game"  && r.posterUrl) ?? null;
-  // For single-type tabs — first item of that type
+  // Для вкладки конкретного типа берем первый элемент с постером.
   const featuredSingle = visible.find((r) => r.posterUrl) ?? null;
 
   if (loading) {
@@ -586,7 +570,6 @@ export default function RecommendationsClient() {
 
   return (
     <>
-      {/* ── Add Modal ── */}
       {modalRec && (
         <AddModal
           rec={modalRec}
@@ -597,7 +580,6 @@ export default function RecommendationsClient() {
       )}
 
       <div className="space-y-8">
-        {/* Meta chips */}
         {meta && (
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground animate-fade-in">
             <span>Найдено: <span className="text-foreground font-medium">{meta.total}</span></span>
@@ -613,7 +595,6 @@ export default function RecommendationsClient() {
           </div>
         )}
 
-        {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             {(["all", "movie", "book", "game"] as const).map((type) => (
@@ -638,7 +619,6 @@ export default function RecommendationsClient() {
           </button>
         </div>
 
-        {/* Hero — carousel in "all" tab, single banner in type tabs */}
         {typeFilter === "all"
           ? <HeroCarousel
               movie={featuredMovie}
@@ -649,7 +629,6 @@ export default function RecommendationsClient() {
           : featuredSingle && <HeroBanner rec={featuredSingle} onOpenModal={setModalRec} />
         }
 
-        {/* Sections */}
         <div className="space-y-10">
           {typeFilter === "all" && crossRecs.length > 0 && (
             <div className="rounded-2xl p-5 bg-gradient-to-br border border-border/50 from-fuchsia-500/15 to-violet-500/5">

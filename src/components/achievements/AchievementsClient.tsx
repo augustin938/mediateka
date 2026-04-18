@@ -39,7 +39,6 @@ const RARITY_STYLES = {
 
 function buildAchievements(s: Stats): Achievement[] {
   return [
-    // ── Коллекция ───────────────────────────────────────────────
     {
       id: "first_step", icon: "🌱", title: "Первый шаг", rarity: "common",
       description: "Добавь первый элемент в коллекцию",
@@ -81,7 +80,6 @@ function buildAchievements(s: Stats): Achievement[] {
       progress: [s.movies > 0, s.books > 0, s.games > 0].filter(Boolean).length / 3 * 100,
     },
 
-    // ── Завершённые ─────────────────────────────────────────────
     {
       id: "completed_1", icon: "✅", title: "Финишёр", rarity: "common",
       description: "Завершил первый элемент коллекции",
@@ -107,7 +105,6 @@ function buildAchievements(s: Stats): Achievement[] {
       progress: Math.min(s.completed / 50 * 100, 100),
     },
 
-    // ── Фильмы ──────────────────────────────────────────────────
     {
       id: "movies_5", icon: "🎬", title: "Киноман", rarity: "common",
       description: "Добавь 5 фильмов в коллекцию",
@@ -125,7 +122,6 @@ function buildAchievements(s: Stats): Achievement[] {
       progress: Math.min(s.movies / 25 * 100, 100),
     },
 
-    // ── Книги ───────────────────────────────────────────────────
     {
       id: "books_5", icon: "📚", title: "Читатель", rarity: "common",
       description: "Добавь 5 книг в коллекцию",
@@ -143,7 +139,6 @@ function buildAchievements(s: Stats): Achievement[] {
       progress: Math.min(s.books / 25 * 100, 100),
     },
 
-    // ── Игры ────────────────────────────────────────────────────
     {
       id: "games_5", icon: "🎮", title: "Геймер", rarity: "common",
       description: "Добавь 5 игр в коллекцию",
@@ -161,7 +156,6 @@ function buildAchievements(s: Stats): Achievement[] {
       progress: Math.min(s.games / 25 * 100, 100),
     },
 
-    // ── Активность ──────────────────────────────────────────────
     {
       id: "rated_5", icon: "⭐", title: "Критик", rarity: "common",
       description: "Оцени 5 элементов коллекции",
@@ -231,7 +225,6 @@ export default function AchievementsClient({ stats }: { stats: Stats }) {
 
   return (
     <div className="space-y-8">
-      {/* Header stats */}
       <div className="glass rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
         <div className="flex-1 space-y-3">
           <div className="flex items-center justify-between">
@@ -249,7 +242,6 @@ export default function AchievementsClient({ stats }: { stats: Stats }) {
           <p className="text-xs text-muted-foreground">{totalProgress}% достижений получено</p>
         </div>
 
-        {/* Rarity counts */}
         <div className="flex gap-4">
           {(["legendary", "epic", "rare", "common"] as const).map((rarity) => {
             const count = unlocked.filter((a) => a.rarity === rarity).length;
@@ -267,7 +259,6 @@ export default function AchievementsClient({ stats }: { stats: Stats }) {
         </div>
       </div>
 
-      {/* Unlocked first */}
       {unlocked.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
@@ -297,7 +288,6 @@ export default function AchievementsClient({ stats }: { stats: Stats }) {
         </div>
       )}
 
-      {/* Locked by category */}
       {categories.map((cat) => {
         const catLocked = locked.filter((a) => a.category === cat);
         if (catLocked.length === 0) return null;
@@ -324,7 +314,6 @@ export default function AchievementsClient({ stats }: { stats: Stats }) {
                     </div>
                     <p className="text-sm text-muted-foreground">{a.description}</p>
 
-                    {/* Progress bar */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Прогресс</span>

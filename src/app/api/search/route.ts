@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 function getEnvKey(name: string): string | null {
   const raw = process.env[name];
   if (!raw) return null;
-  // Handle values pasted with surrounding quotes in hosting panels.
+  // На хостингах ключи иногда вставляются в кавычках — нормализуем значение.
   return raw.trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
 }
 
@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
   const results: any[] = [];
   let hasMore = false;
 
-  // Kinopoisk movies
   if ((type === "all" || type === "movie") && kinopoiskApiKey) {
     try {
       const res = await fetch(
@@ -61,7 +60,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // OpenLibrary books
   if (type === "all" || type === "book") {
     try {
       const offset = (page - 1) * pageSize;
@@ -95,7 +93,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // RAWG games
   if ((type === "all" || type === "game") && rawgApiKey) {
     try {
       const res = await fetch(

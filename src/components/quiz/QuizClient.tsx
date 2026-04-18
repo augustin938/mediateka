@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type QType = "description" | "year" | "genre" | "rating" | "poster" | "poster_reveal" | "creator";
 type Mode  = "classic" | "endless";
 type Cat   = "all" | "movie" | "book" | "game";
@@ -25,7 +24,6 @@ interface Question {
   rating: number | null;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const TIMER_SECS  = 15;
 const TYPE_EMOJI: Record<QType, string> = {
   description:  "📖",
@@ -59,10 +57,8 @@ function getTier(score: number, total: number) {
   return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
 }
 
-// ─── PosterReveal ─────────────────────────────────────────────────────────────
-// Gradually reveals the poster by uncovering tiles
 function PosterReveal({ src, revealed }: { src: string; revealed: number }) {
-  // 4x4 grid = 16 tiles; `revealed` = how many are uncovered (0-16)
+  // Постер делится на 16 плиток, открываем их постепенно.
   const COLS = 4, ROWS = 4, TOTAL = COLS * ROWS;
   const order = useRef<number[]>([]);
   if (order.current.length === 0) {
@@ -90,7 +86,6 @@ function PosterReveal({ src, revealed }: { src: string; revealed: number }) {
   );
 }
 
-// ─── Setup Screen ─────────────────────────────────────────────────────────────
 function SetupScreen({ onStart }: { onStart: (mode: Mode, cat: Cat) => void }) {
   const [mode, setMode] = useState<Mode>("classic");
   const [cat,  setCat]  = useState<Cat>("all");
@@ -103,7 +98,6 @@ function SetupScreen({ onStart }: { onStart: (mode: Mode, cat: Cat) => void }) {
         <p className="text-sm text-muted-foreground">Проверь, как хорошо ты помнишь свою коллекцию</p>
       </div>
 
-      {/* Mode */}
       <div className="space-y-3">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Режим</p>
         <div className="grid grid-cols-2 gap-3">
@@ -122,7 +116,6 @@ function SetupScreen({ onStart }: { onStart: (mode: Mode, cat: Cat) => void }) {
         </div>
       </div>
 
-      {/* Category */}
       <div className="space-y-3">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Категория</p>
         <div className="grid grid-cols-2 gap-2">
@@ -144,7 +137,6 @@ function SetupScreen({ onStart }: { onStart: (mode: Mode, cat: Cat) => void }) {
   );
 }
 
-// ─── Question Card ────────────────────────────────────────────────────────────
 interface QuestionCardProps {
   q: Question;
   qIndex: number;
@@ -162,11 +154,11 @@ interface QuestionCardProps {
 
 function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isCorrect, onNext, onExit, mode, lives }: QuestionCardProps) {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECS);
-  const [revealed, setRevealed] = useState(0); // for poster_reveal
+  const [revealed, setRevealed] = useState(0);
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Reset timer & reveal on new question
+  // На каждый новый вопрос перезапускаем таймер и состояние открытия постера.
   useEffect(() => {
     setTimeLeft(TIMER_SECS);
     setRevealed(0);
@@ -181,7 +173,7 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
       });
     }, 1000);
 
-    // poster_reveal: uncover 1 tile every 700ms (16 tiles × 700ms = ~11s)
+    // В режиме открытия постера показываем по одной плитке каждые 700 мс.
     if (q.type === "poster_reveal") {
       revealRef.current = setInterval(() => {
         setRevealed((r) => {
@@ -204,16 +196,15 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
     }
   }, [timeLeft, answered, onAnswer]);
 
-  // Stop timer when answered
   useEffect(() => {
     if (answered !== null) {
       clearInterval(timerRef.current!);
       clearInterval(revealRef.current!);
-      if (q.type === "poster_reveal") setRevealed(16); // show full poster
+      if (q.type === "poster_reveal") setRevealed(16);
     }
   }, [answered, q.type]);
 
-  // Hotkeys 1-4 + Enter/Space
+  // Быстрые клавиши: 1-4 для ответа, Enter/Space для перехода дальше.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (answered !== null) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNext(); } return; }
@@ -229,7 +220,6 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header bar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 text-sm">
           <button
@@ -258,12 +248,10 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
         </div>
       </div>
 
-      {/* Timer bar */}
       <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
         <div className={cn("h-full rounded-full transition-all duration-1000", timerColor)} style={{ width: `${timerPct}%` }} />
       </div>
 
-      {/* Question type badge */}
       <div className="flex items-center gap-2">
         <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
           {TYPE_EMOJI[q.type]} {TYPE_LABEL[q.type]}
@@ -271,18 +259,15 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
         <span className="text-xs text-muted-foreground">{q.hint}</span>
       </div>
 
-      {/* Question content */}
       <div className="glass rounded-2xl p-5 min-h-[140px] flex items-center justify-center">
         {(q.type === "poster" || q.type === "poster_reveal") && q.posterUrl ? (
           <div className="w-full flex flex-col items-center gap-2">
             {q.type === "poster_reveal" && answered === null ? (
               <PosterReveal src={q.posterUrl} revealed={revealed} />
             ) : q.type === "poster_reveal" && answered !== null ? (
-              // After answer — show full poster
               // eslint-disable-next-line @next/next/no-img-element
               <img src={q.posterUrl} alt="poster" className="max-h-52 mx-auto rounded-xl object-cover" />
             ) : (
-              // poster type — blurred until answered, reveal on answer
               <div className="relative max-w-[180px] mx-auto rounded-xl overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -308,7 +293,6 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
         )}
       </div>
 
-      {/* Answer options */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {q.options.map((opt, i) => {
           const isSelected  = answered === opt;
@@ -333,7 +317,6 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
         })}
       </div>
 
-      {/* Answer reveal panel */}
       {answered !== null && (
         <div className={cn("rounded-2xl p-4 border animate-fade-in space-y-2",
           isCorrect ? "bg-emerald-500/10 border-emerald-500/30" : "bg-red-500/10 border-red-500/30")}>
@@ -365,7 +348,6 @@ function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isC
   );
 }
 
-// ─── Results Screen ───────────────────────────────────────────────────────────
 interface ResultsProps {
   points: number;
   correctAnswers: number;
@@ -382,7 +364,7 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    // Auto-save to DB
+    // После завершения автоматически сохраняем результат в профиль.
     fetch("/api/quiz/results", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
@@ -396,7 +378,6 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
 
   return (
     <div className="space-y-6 animate-fade-in max-w-lg mx-auto py-4">
-      {/* Score card */}
       <div className="glass rounded-2xl p-6 text-center space-y-2">
         <div className="text-5xl font-display font-black text-foreground">{correctAnswers}<span className="text-2xl text-muted-foreground">/{total}</span></div>
         <div className={cn("text-xl font-bold", tier.color)}>{tier.label}</div>
@@ -407,7 +388,6 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
         {saved && <div className="text-xs text-emerald-400 mt-1">✓ Результат сохранён</div>}
       </div>
 
-      {/* Answer breakdown */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Разбор ответов</p>
         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -428,7 +408,6 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3">
         <button onClick={onRestart}
           className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-2xl font-semibold transition-colors">
@@ -443,7 +422,6 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
   );
 }
 
-// ─── Main QuizClient ──────────────────────────────────────────────────────────
 export default function QuizClient() {
   const [phase,    setPhase]    = useState<"setup" | "playing" | "results">("setup");
   const [mode,     setMode]     = useState<Mode>("classic");
@@ -454,7 +432,7 @@ export default function QuizClient() {
   const [score,     setScore]     = useState(0);
   const [streak,    setStreak]    = useState(0);
   const [bestStreak,setBestStreak]= useState(0);
-  const [lives,     setLives]     = useState(3);  // endless only
+  const [lives,     setLives]     = useState(3);
   const [history,   setHistory]   = useState<{ q: Question; ans: string; correct: boolean }[]>([]);
   const [answered,  setAnswered]  = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -503,9 +481,9 @@ export default function QuizClient() {
     setIsCorrect(correct);
 
     if (correct) {
-      // Speed bonus: +1 for fast answer (>10s left), +0 otherwise
+      // Быстрый ответ дает дополнительное очко.
       const bonus = timeLeft > 10 ? 1 : 0;
-      // Streak multiplier: every 3 in a row = +1 extra
+      // За каждую серию из 3 правильных ответов добавляем еще 1 очко.
       const newStreak = streak + 1;
       const streakBonus = newStreak > 0 && newStreak % 3 === 0 ? 1 : 0;
       setScore((s) => s + 1 + bonus + streakBonus);
@@ -534,13 +512,11 @@ export default function QuizClient() {
     setAnswered(null);
     setIsCorrect(null);
 
-    // Endless: prefetch next batch when nearing end
+    // В бесконечном режиме заранее подгружаем следующий пакет вопросов.
     if (mode === "endless" && next >= questions.length - 2) {
       fetchQuestions("endless", category, true);
     }
   }, [qIndex, questions, mode, lives, isCorrect, category, fetchQuestions]);
-
-  // ── Render ──
   if (phase === "setup") {
     return (
       <div className="max-w-lg mx-auto">

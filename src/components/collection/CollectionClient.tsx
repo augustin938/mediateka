@@ -6,7 +6,6 @@ import type { CollectionItemWithMedia, CollectionStatus } from "@/types";
 import { STATUS_LABELS, STATUS_COLORS, MEDIA_TYPE_ICONS } from "@/types";
 import { cn } from "@/lib/utils";
 
-// ─── TYPES & CONSTANTS ────────────────────────────────────────────────────────
 interface Tag { id: string; name: string; color: string; }
 interface CollectionClientProps { initialItems: CollectionItemWithMedia[]; }
 
@@ -46,7 +45,6 @@ const STATUS_ICON: Record<CollectionStatus, string> = {
   WANT: "🔖", IN_PROGRESS: "▶️", COMPLETED: "✅", DROPPED: "❌",
 };
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
 function getSpineColorIndex(id: string) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
@@ -74,7 +72,6 @@ function getBookTilt(id: string) {
 }
 function getBookWidth(id: string, hasPoster: boolean) { return hasPoster ? 52 : 26+(id.charCodeAt(2)%10); }
 
-// ─── STAT BAR ─────────────────────────────────────────────────────────────────
 function StatBar({ items }: { items: CollectionItemWithMedia[] }) {
   const total = items.length;
   if (total === 0) return null;
@@ -124,7 +121,6 @@ function StatBar({ items }: { items: CollectionItemWithMedia[] }) {
   );
 }
 
-// ─── SHELF VIEW ───────────────────────────────────────────────────────────────
 const SHELF_KEY = "shelf_order_v2";
 const SHELF_GAP = 3;
 const SHELF_PAD = 48;
@@ -314,7 +310,6 @@ function ShelfView({ items, onSelect }: ShelfProps) {
   );
 }
 
-// ─── GRID VIEW ────────────────────────────────────────────────────────────────
 interface ViewProps { items:CollectionItemWithMedia[]; onSelect:(i:CollectionItemWithMedia)=>void; onEdit:(i:CollectionItemWithMedia)=>void; onRemove:(id:string)=>void; }
 
 function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
@@ -330,7 +325,6 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
           )}
           onClick={()=>onSelect(item)}>
 
-          {/* Poster */}
           <div className="aspect-[2/3] bg-muted/30 relative overflow-hidden">
             {item.mediaItem.posterUrl
               // eslint-disable-next-line @next/next/no-img-element
@@ -342,22 +336,18 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
                 <p className="text-white/80 text-xs text-center px-3 leading-tight font-medium line-clamp-3">{item.mediaItem.title}</p>
               </div>}
 
-            {/* Status strip */}
             <div className={cn("absolute top-0 left-0 right-0 h-0.5", STATUS_BAR_COLORS[item.status])}/>
 
-            {/* Rating badge */}
             {item.rating && (
               <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center border border-white/10">
                 <span className="text-amber-400 font-bold text-[11px] leading-none">{item.rating}</span>
               </div>
             )}
 
-            {/* Status icon badge */}
             <div className="absolute top-2 left-2">
               <span className="text-sm leading-none">{STATUS_ICON[item.status]}</span>
             </div>
 
-            {/* Hover overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 gap-2">
               <p className="text-white text-[11px] font-bold leading-tight line-clamp-2">{item.mediaItem.title}</p>
               {item.mediaItem.year && <p className="text-white/50 text-[10px]">{item.mediaItem.year}</p>}
@@ -386,7 +376,6 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
             </div>
           </div>
 
-          {/* Card footer */}
           <div className="p-2.5 space-y-1.5">
             <p className="text-xs font-semibold leading-tight line-clamp-1 text-foreground">{item.mediaItem.title}</p>
             <div className="flex items-center justify-between gap-1">
@@ -409,7 +398,6 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
   );
 }
 
-// ─── LIST VIEW ────────────────────────────────────────────────────────────────
 function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
   return (
     <div className="space-y-1.5">
@@ -418,16 +406,13 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
           className="group relative glass rounded-xl overflow-hidden cursor-pointer hover:bg-card/90 transition-all duration-200 hover:shadow-lg"
           onClick={()=>onSelect(item)}>
 
-          {/* Left status accent */}
           <div className={cn("absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl", STATUS_BAR_COLORS[item.status])}/>
 
           <div className="flex items-center gap-3 p-3 pl-4">
-            {/* Index */}
             <span className="text-xs text-muted-foreground/40 font-mono w-5 text-right flex-shrink-0 select-none">
               {idx+1}
             </span>
 
-            {/* Poster */}
             <div className="w-10 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50 shadow-sm">
               {item.mediaItem.posterUrl
                 // eslint-disable-next-line @next/next/no-img-element
@@ -437,7 +422,6 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
                   </div>}
             </div>
 
-            {/* Main info */}
             <div className="flex-1 min-w-0 space-y-0.5">
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-sm truncate text-foreground flex-1 leading-tight">{item.mediaItem.title}</p>
@@ -469,7 +453,6 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
               )}
             </div>
 
-            {/* Rating */}
             {item.rating ? (
               <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                 <span className="text-amber-400 font-bold text-base leading-none">{item.rating}</span>
@@ -479,7 +462,6 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
               <div className="w-6 flex-shrink-0"/>
             )}
 
-            {/* Actions */}
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pl-1">
               <button
                 onClick={e=>{e.stopPropagation();onEdit(item);}}
@@ -505,7 +487,6 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
   );
 }
 
-// ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
 function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
   item: CollectionItemWithMedia;
   onClose: ()=>void;
@@ -518,7 +499,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
       <div className="absolute inset-0 bg-black/75 backdrop-blur-md"/>
       <div className="relative glass w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden animate-fade-in" onClick={e=>e.stopPropagation()}>
 
-        {/* Hero banner */}
         <div className="relative h-52 bg-muted/30 overflow-hidden">
           {item.mediaItem.posterUrl
             // eslint-disable-next-line @next/next/no-img-element
@@ -527,7 +507,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
                 style={{objectPosition:"center 20%"}}/>
             : <div className={cn("w-full h-full bg-gradient-to-br", getSpineColor(item.id))}/>}
 
-          {/* Foreground poster + info */}
           <div className="absolute inset-0 flex items-end p-5 gap-4">
             {item.mediaItem.posterUrl && (
               <div className="flex-shrink-0 w-24 h-36 rounded-xl overflow-hidden shadow-2xl border border-white/10">
@@ -558,7 +537,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
             )}
           </div>
 
-          {/* Close btn */}
           <button onClick={onClose}
             className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-colors text-sm">
             ✕
@@ -567,9 +545,7 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
           <div className={cn("absolute bottom-0 left-0 right-0 h-0.5", STATUS_BAR_COLORS[item.status])}/>
         </div>
 
-        {/* Body */}
         <div className="p-5 space-y-4">
-          {/* Genres */}
           {item.mediaItem.genres && item.mediaItem.genres.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {item.mediaItem.genres.slice(0,6).map(g=>(
@@ -578,7 +554,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
             </div>
           )}
 
-          {/* Tags */}
           {(item as any).tags?.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {((item as any).tags as Tag[]).map(tag=>(
@@ -589,7 +564,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
             </div>
           )}
 
-          {/* Review */}
           {item.review && (
             <div className="bg-muted/20 rounded-xl p-3.5 border border-border/40">
               <p className="text-[10px] text-muted-foreground mb-1.5 font-semibold uppercase tracking-wider">Мой отзыв</p>
@@ -597,7 +571,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
             </div>
           )}
 
-          {/* Actions */}
           <div className="grid grid-cols-3 gap-2 pt-1">
             <select value={item.status}
               onChange={e=>onStatusChange(item.id, e.target.value as CollectionStatus)}
@@ -621,7 +594,6 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
   );
 }
 
-// ─── EDIT MODAL ───────────────────────────────────────────────────────────────
 function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, onReviewChange, onSave, onClose, onToggleTag, onCreateTag, onDeleteTag }: {
   editingId: string;
   editRating: number|null;
@@ -649,10 +621,8 @@ function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, 
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}/>
       <div className="relative glass rounded-t-3xl sm:rounded-2xl p-6 w-full sm:max-w-md space-y-5 animate-fade-in" onClick={e=>e.stopPropagation()}>
 
-        {/* Drag handle for mobile */}
         <div className="w-10 h-1 rounded-full bg-border/50 mx-auto sm:hidden"/>
 
-        {/* Tabs */}
         <div className="flex gap-2 p-1 bg-muted/30 rounded-xl">
           {[{id:"main",label:"✏️ Оценка & отзыв"},{id:"tags",label:"🏷 Теги"}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id as any)}
@@ -667,7 +637,6 @@ function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, 
 
         {tab==="main" && (
           <div className="space-y-5">
-            {/* Star/number rating */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-foreground">Оценка</label>
@@ -704,7 +673,6 @@ function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, 
               </div>
             </div>
 
-            {/* Review */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground">Отзыв</label>
               <textarea value={editReview} onChange={e=>onReviewChange(e.target.value)}
@@ -785,7 +753,6 @@ function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, 
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function CollectionClient({ initialItems }: CollectionClientProps) {
   const [items, setItems] = useState<CollectionItemWithMedia[]>(initialItems);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -916,7 +883,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const resetFilters = ()=>{ setStatusFilter("all"); setTypeFilter("all"); setYearFrom(""); setYearTo(""); setGenreFilter(""); setTagFilter(null); setSearchQuery(""); };
   const hasActiveFilters = statusFilter!=="all" || typeFilter!=="all" || yearFrom || yearTo || genreFilter || tagFilter || searchQuery.trim();
 
-  // ── Empty state ──
   if(items.length===0) return (
     <div className="text-center py-32 space-y-4">
       <div className="text-6xl">📭</div>
@@ -930,10 +896,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   return (
     <div className="space-y-5">
 
-      {/* Stat bar */}
       <StatBar items={items}/>
 
-      {/* Search */}
       <div className="relative">
         <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
           <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -952,7 +916,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         )}
       </div>
 
-      {/* Status tabs */}
       <div className="flex flex-wrap gap-1.5">
         {STATUS_FILTERS.map(status=>(
           <button key={status} onClick={()=>setStatusFilter(status)}
@@ -971,7 +934,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         ))}
       </div>
 
-      {/* Tag pills */}
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-xs text-muted-foreground">🏷</span>
@@ -993,7 +955,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </div>
       )}
 
-      {/* Controls row */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
           <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}
@@ -1022,7 +983,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           )}
         </div>
 
-        {/* View switcher */}
         <div className="flex bg-muted/30 border border-border rounded-xl overflow-hidden p-0.5 gap-0.5">
           {[
             { mode:"grid", label:"Сетка",
@@ -1047,7 +1007,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </div>
       </div>
 
-      {/* Advanced filters panel */}
       {showFilters && (
         <div className="glass rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in border border-primary/10">
           <div className="space-y-1.5">
@@ -1070,7 +1029,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </div>
       )}
 
-      {/* Results count */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {hasActiveFilters
@@ -1079,7 +1037,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </p>
       </div>
 
-      {/* Empty filtered state */}
       {filtered.length === 0 && (
         <div className="text-center py-20 text-muted-foreground space-y-3">
           <div className="text-4xl">🔍</div>
@@ -1088,7 +1045,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </div>
       )}
 
-      {/* Views */}
       {viewMode==="shelf" && filtered.length>0 && (
         <ShelfView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
       )}
@@ -1101,17 +1057,14 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         return (
           <div className="space-y-14">
 
-            {/* ── ФИЛЬМЫ: кинолента ── */}
             {movies.length > 0 && (
               <div className="space-y-4">
                 <div className="relative flex items-center gap-0 overflow-hidden rounded-xl select-none" style={{height:52}}>
-                  {/* Film strip holes left */}
                   <div className="flex-shrink-0 flex flex-col justify-around h-full px-2 py-1 gap-1 bg-blue-950/80 border-r border-blue-800/40" style={{width:28}}>
                     {Array.from({length:4}).map((_,i)=>(
                       <div key={i} className="w-3 h-3 rounded-sm bg-background/80 border border-blue-700/30"/>
                     ))}
                   </div>
-                  {/* Main strip */}
                   <div className="flex-1 flex items-center gap-4 bg-blue-950/80 px-5 h-full">
                     <div className="flex items-center gap-3">
                       <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1121,14 +1074,12 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                     </div>
                     <div className="h-4 w-px bg-blue-700/50"/>
                     <span className="text-blue-300 font-mono text-sm font-bold">{movies.length} titles</span>
-                    {/* Decorative sprocket holes in strip */}
                     <div className="ml-auto flex items-center gap-1 opacity-20">
                       {Array.from({length:8}).map((_,i)=>(
                         <div key={i} className="w-2 h-4 rounded-sm bg-blue-300 border border-blue-400/30"/>
                       ))}
                     </div>
                   </div>
-                  {/* Film strip holes right */}
                   <div className="flex-shrink-0 flex flex-col justify-around h-full px-2 py-1 gap-1 bg-blue-950/80 border-l border-blue-800/40" style={{width:28}}>
                     {Array.from({length:4}).map((_,i)=>(
                       <div key={i} className="w-3 h-3 rounded-sm bg-background/80 border border-blue-700/30"/>
@@ -1141,34 +1092,27 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
               </div>
             )}
 
-            {/* ── КНИГИ: страница из книги ── */}
             {books.length > 0 && (
               <div className="space-y-4">
                 <div className="relative overflow-hidden" style={{height:60}}>
-                  {/* Page curl effect background */}
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-amber-950/60 border border-amber-800/30"/>
-                  {/* Lined paper texture */}
                   <div className="absolute inset-0 rounded-xl overflow-hidden opacity-10">
                     {Array.from({length:6}).map((_,i)=>(
                       <div key={i} className="absolute left-0 right-0 h-px bg-amber-400" style={{top: 8 + i*9}}/>
                     ))}
                   </div>
-                  {/* Red margin line */}
                   <div className="absolute left-14 top-0 bottom-0 w-px bg-red-400/30"/>
-                  {/* Hole punches */}
                   <div className="absolute left-4 top-0 bottom-0 flex flex-col justify-around py-2">
                     {[0,1,2].map(i=>(
                       <div key={i} className="w-4 h-4 rounded-full bg-background/60 border border-amber-700/30"/>
                     ))}
                   </div>
-                  {/* Content */}
                   <div className="absolute inset-0 flex items-center gap-4 pl-16 pr-6">
                     <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
                     </svg>
                     <span className="font-display font-black text-xl text-amber-100 uppercase tracking-widest">Книги</span>
                     <span className="text-amber-500/70 text-xs font-mono italic">{books.length} шт.</span>
-                    {/* Handwritten underline */}
                     <svg className="absolute bottom-2 left-16 w-32 h-3 text-amber-600/40" viewBox="0 0 120 10" fill="none">
                       <path d="M2 7 Q30 3 60 6 Q90 9 118 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
                     </svg>
@@ -1180,18 +1124,14 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
               </div>
             )}
 
-            {/* ── ИГРЫ: health bar / HUD ── */}
             {games.length > 0 && (
               <div className="space-y-4">
                 <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-black/60" style={{height:56}}>
-                  {/* Scanlines */}
                   <div className="absolute inset-0 opacity-5 pointer-events-none" style={{backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,0,0.3) 2px,rgba(0,255,0,0.3) 3px)"}}/>
-                  {/* Corner brackets */}
                   <div className="absolute top-1.5 left-1.5 w-4 h-4 border-l-2 border-t-2 border-emerald-400/70"/>
                   <div className="absolute top-1.5 right-1.5 w-4 h-4 border-r-2 border-t-2 border-emerald-400/70"/>
                   <div className="absolute bottom-1.5 left-1.5 w-4 h-4 border-l-2 border-b-2 border-emerald-400/70"/>
                   <div className="absolute bottom-1.5 right-1.5 w-4 h-4 border-r-2 border-b-2 border-emerald-400/70"/>
-                  {/* Content */}
                   <div className="absolute inset-0 flex items-center gap-4 px-8">
                     <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h.01M18 12h.01M12 6h.01M12 18h.01M8.25 12a.75.75 0 111.5 0 .75.75 0 01-1.5 0zm4.5-4.5a.75.75 0 111.5 0 .75.75 0 01-1.5 0zm0 9a.75.75 0 111.5 0 .75.75 0 01-1.5 0zm-6.75 0a.75.75 0 111.5 0 .75.75 0 01-1.5 0z"/>
@@ -1225,7 +1165,6 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           : <ListView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
       )}
 
-      {/* Modals */}
       {detailItem && (
         <DetailModal item={detailItem} onClose={()=>setDetailItem(null)} onEdit={startEdit} onRemove={removeItem} onStatusChange={updateStatus}/>
       )}

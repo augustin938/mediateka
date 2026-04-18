@@ -31,7 +31,6 @@ interface Props {
 
 const TYPE_ICONS: Record<string, string> = { movie: "🎬", book: "📚", game: "🎮" };
 
-// ── NEW helpers ───────────────────────────────────────────────────────────────
 const CAT_LABELS: Record<string, string> = { all: "Всё", movie: "Фильмы", book: "Книги", game: "Игры" };
 const MODE_LABELS: Record<string, string> = { classic: "🎯 Классик", endless: "♾️ Бесконечный" };
 const TIER_THRESHOLDS = [
@@ -45,7 +44,6 @@ function getTier(correctAnswers: number, total: number) {
   const pct = total > 0 ? (correctAnswers / total) * 100 : 0;
   return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Avatar({ image, name, size = 96 }: { image: string | null; name: string; size?: number }) {
   if (image) {
@@ -212,7 +210,6 @@ function PinnedMedia({ collection, initialPinnedIds }: { collection: CollectionE
         </button>
       </div>
 
-      {/* Display mode */}
       {!editing && (
         <div className="grid grid-cols-3 gap-3">
           {pinnedItems.length === 0 && (
@@ -238,7 +235,6 @@ function PinnedMedia({ collection, initialPinnedIds }: { collection: CollectionE
               </div>
             </div>
           ))}
-          {/* Empty slots */}
           {Array.from({ length: 3 - pinnedItems.length }).map((_, i) => (
             <div key={i} className="rounded-xl border-2 border-dashed border-border/50 flex items-center justify-center text-muted-foreground/30 text-2xl"
               style={{ aspectRatio: "2/3" }}>
@@ -248,7 +244,6 @@ function PinnedMedia({ collection, initialPinnedIds }: { collection: CollectionE
         </div>
       )}
 
-      {/* Edit mode */}
       {editing && (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">Выбрано: {pinnedIds.length}/3</p>
@@ -297,7 +292,6 @@ function PinnedMedia({ collection, initialPinnedIds }: { collection: CollectionE
   );
 }
 
-// ── NEW ──────────────────────────────────────────────────────────────────────
 function QuizHistory({ results }: { results: QuizResult[] }) {
   if (results.length === 0) {
     return (
@@ -332,7 +326,6 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
         </a>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 gap-2">
         {[
           { label: "Игр сыграно",    value: totalGames,           icon: "🎯" },
@@ -348,7 +341,6 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
         ))}
       </div>
 
-      {/* Last 10 games */}
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Последние игры</p>
         <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
@@ -391,7 +383,6 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProfileClient({ user, stats, activityByDay, collection, initialPinnedIds, quizHistory }: Props) {
   const [name, setName] = useState(user.name);
@@ -447,7 +438,6 @@ export default function ProfileClient({ user, stats, activityByDay, collection, 
       <ActivityCalendar activityByDay={activityByDay} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left */}
         <div className="space-y-4">
           <div className="glass rounded-2xl p-6 flex flex-col items-center gap-4">
             <div className="relative group">
@@ -466,7 +456,6 @@ export default function ProfileClient({ user, stats, activityByDay, collection, 
             </div>
           </div>
 
-          {/* Pinned */}
           <PinnedMedia collection={collection} initialPinnedIds={initialPinnedIds} />
 
           <div className="glass rounded-2xl p-5 space-y-4">
@@ -501,7 +490,6 @@ export default function ProfileClient({ user, stats, activityByDay, collection, 
           </div>
         </div>
 
-        {/* Right */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex gap-2">
             {[{ id: "info", label: "👤 Основное" }, { id: "password", label: "🔒 Пароль" }].map((tab) => (
@@ -579,7 +567,6 @@ export default function ProfileClient({ user, stats, activityByDay, collection, 
             </div>
           )}
 
-          {/* Quiz history */}
           <QuizHistory results={quizHistory} />
         </div>
       </div>

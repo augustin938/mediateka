@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ notifications: items, unreadCount });
 }
 
-// Mark all as read
 export async function PATCH(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

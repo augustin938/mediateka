@@ -49,7 +49,7 @@ export default function RandomPicker() {
     setLoading(true);
     setEmpty(false);
 
-    // Spin animation delay
+    // Небольшая пауза нужна, чтобы анимация вращения была заметной.
     await new Promise((r) => setTimeout(r, 600));
 
     try {
@@ -76,7 +76,6 @@ export default function RandomPicker() {
 
   return (
     <div className="space-y-6">
-      {/* Type selector */}
       <div className="flex flex-wrap gap-2">
         {TYPE_OPTIONS.map((opt) => (
           <button key={opt.value} onClick={() => { setType(opt.value); setItem(null); setEmpty(false); }}
@@ -87,9 +86,7 @@ export default function RandomPicker() {
         ))}
       </div>
 
-      {/* Main pick button + result */}
       <div className="glass rounded-3xl p-8 flex flex-col items-center gap-8">
-        {/* Spin button */}
         <div className="relative">
           <button onClick={pick} disabled={loading}
             className={cn(
@@ -110,7 +107,6 @@ export default function RandomPicker() {
           )}
         </div>
 
-        {/* Empty state */}
         {empty && (
           <div className="text-center space-y-2 mt-4">
             <p className="text-lg font-medium text-foreground">Список пуст 😅</p>
@@ -123,11 +119,9 @@ export default function RandomPicker() {
           </div>
         )}
 
-        {/* Result card */}
         {item && !spinning && (
           <div className="w-full max-w-sm animate-fade-in">
             <div className="glass rounded-2xl overflow-hidden border border-primary/20 shadow-xl shadow-primary/10">
-              {/* Poster */}
               <div className="aspect-video relative overflow-hidden bg-muted/30">
                 {item.mediaItem.posterUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -190,7 +184,6 @@ export default function RandomPicker() {
         )}
       </div>
 
-      {/* History */}
       {history.length > 1 && (
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">Предыдущие варианты</h3>

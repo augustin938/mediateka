@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     .where(eq(collectionItems.userId, session.user.id))
     .orderBy(collectionItems.addedAt);
 
-  // Build CSV
+  // Формируем CSV вручную, чтобы безопасно экранировать текстовые поля.
   const header = ["Название", "Тип", "Статус", "Оценка", "Год", "Жанры", "Отзыв", "Добавлено"].join(",");
   const rows = items.map(({ collection_item, media_item }) => {
     const cols = [

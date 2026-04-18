@@ -70,7 +70,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Dark mode background — deep space feel */
   .dark body {
     background-color: hsl(224, 30%, 4%);
     background-image:
@@ -80,7 +79,6 @@
     background-attachment: fixed;
   }
 
-  /* Light mode subtle gradient */
   :root:not(.dark) body {
     background-image:
       radial-gradient(ellipse 80% 40% at 50% -10%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
@@ -92,7 +90,6 @@
     letter-spacing: -0.02em;
   }
 
-  /* Стилизованный скроллбар */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -108,7 +105,6 @@
     background: hsl(var(--muted-foreground) / 0.4);
   }
 
-  /* Выделение текста */
   ::selection {
     background: hsl(var(--primary) / 0.25);
     color: hsl(var(--foreground));
@@ -116,7 +112,6 @@
 }
 
 @layer utilities {
-  /* ── Glass эффект ── */
   .glass {
     background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(20px) saturate(150%);
@@ -144,7 +139,6 @@
     box-shadow: 0 12px 40px rgba(139, 92, 246, 0.12), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
   }
 
-  /* ── Glow эффекты ── */
   .glow-primary {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.1);
   }
@@ -153,7 +147,6 @@
     box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
   }
 
-  /* ── Градиентный текст ── */
   .text-gradient {
     background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%);
     -webkit-background-clip: text;
@@ -168,7 +161,6 @@
     background-clip: text;
   }
 
-  /* ── Skeleton ── */
   .skeleton {
     background: linear-gradient(
       90deg,
@@ -180,7 +172,6 @@
     animation: shimmer 1.8s linear infinite;
   }
 
-  /* ── Скроллбар ── */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -197,13 +188,11 @@
     border-radius: 999px;
   }
 
-  /* ── Разделитель с градиентом ── */
   .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
   }
 
-  /* ── Интерактивные элементы ── */
   .interactive {
     @apply transition-all duration-200 cursor-pointer;
   }
@@ -214,7 +203,6 @@
     transform: translateY(0);
   }
 
-  /* ── Карточка с hover эффектом ── */
   .card-hover {
     @apply glass transition-all duration-300;
   }
@@ -225,7 +213,6 @@
     transform: translateY(-2px);
   }
 
-  /* ── Noise texture overlay (для глубины) ── */
   .noise::after {
     content: "";
     position: absolute;
@@ -235,7 +222,6 @@
     border-radius: inherit;
   }
 
-  /* ── Кнопка primary ── */
   .btn-primary {
     @apply relative overflow-hidden bg-primary text-primary-foreground font-semibold rounded-xl px-4 py-2.5 transition-all duration-200;
   }
@@ -250,7 +236,6 @@
 }
 
 @layer components {
-  /* ── Анимации ── */
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
@@ -315,16 +300,13 @@
   .animate-accordion-down { animation: accordion-down 0.2s ease-out; }
   .animate-accordion-up { animation: accordion-up 0.2s ease-out; }
 
-  /* Задержки анимаций */
   .delay-100 { animation-delay: 100ms; }
   .delay-200 { animation-delay: 200ms; }
   .delay-300 { animation-delay: 300ms; }
   .delay-500 { animation-delay: 500ms; }
 
-  /* ── Типографика ── */
   .font-display { font-family: "Syne", sans-serif; letter-spacing: -0.02em; }
 
-  /* ── Фокус ── */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 focus:ring-offset-background;
   }

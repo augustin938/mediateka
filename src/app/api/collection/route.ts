@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     id: crypto.randomUUID(), userId: session.user.id, mediaItemId, status,
   }).returning();
 
-  // Log activity
+  // Сохраняем событие в ленту активности сразу после успешного добавления.
   const actionMap: Record<string, string> = {
     WANT: "want", IN_PROGRESS: "started", COMPLETED: "completed", DROPPED: "dropped",
   };

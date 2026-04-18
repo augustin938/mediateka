@@ -72,19 +72,18 @@ export async function GET(req: Request) {
       ? [...pick(wrongCreators, 3), thisCreator].sort(() => Math.random() - 0.5)
       : options;
 
-    // Genre options: wrong answers must NOT share all genres with the correct answer
-    // Pick titles from rows whose genres don't overlap much with this item's genres
+    // Для жанровых вопросов подбираем варианты с меньшим пересечением жанров.
     const thisGenres = new Set((media_item.genres ?? []).map((g) => g.toLowerCase()));
     const genreWrongTitles = filteredRows
       .filter((r) => {
         if (r.media_item.title === media_item.title) return false;
         const otherGenres = (r.media_item.genres ?? []).map((g) => g.toLowerCase());
-        // exclude if they share more than half the genres
+        // Отбрасываем варианты, где совпадает больше половины жанров.
         const shared = otherGenres.filter((g) => thisGenres.has(g)).length;
         return shared < Math.ceil(thisGenres.size / 2);
       })
       .map((r) => r.media_item.title);
-    // Fallback to any wrong titles if not enough genre-distinct ones
+    // Если подходящих вариантов мало, дополняем обычными неправильными ответами.
     const safeWrong = genreWrongTitles.length >= 3
       ? pick(genreWrongTitles, 3)
       : pick(allTitles.filter((t) => t !== media_item.title), 3);

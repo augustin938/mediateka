@@ -5,14 +5,13 @@ import { db } from "@/lib/db";
 import { collectionItems, collectionItemTags, tags } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
-// GET — теги элемента коллекции
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
-  // Verify ownership
+  // Проверяем, что элемент действительно принадлежит текущему пользователю.
   const [item] = await db.select().from(collectionItems)
     .where(and(eq(collectionItems.id, id), eq(collectionItems.userId, session.user.id)));
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -25,7 +24,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ tags: itemTags.map((t) => t.tag) });
 }
 
-// POST — добавить тег к элементу
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ ok: true });
 }
 
-// DELETE — убрать тег с элемента
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
