@@ -86,7 +86,7 @@ function AddModal({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-colors text-sm"
+            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-colors text-sm focus-ring interactive-soft border border-black/10 dark:border-white/10 shadow-lg"
           >✕</button>
           <div className="absolute bottom-3 left-3 right-3">
             <span className="text-[10px] text-primary bg-primary/20 border border-primary/30 px-2 py-0.5 rounded-md font-medium">
@@ -169,14 +169,14 @@ function RecCard({ rec, index, onOpenModal }: {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
         {rec.year && (
-          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-1.5 py-0.5 text-[10px] text-white/80 font-medium">
+          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-1.5 py-0.5 text-[10px] text-white/80 font-medium border border-black/10 dark:border-white/10 shadow-lg">
             {rec.year}
           </div>
         )}
 
         <button
           onClick={(e) => { e.stopPropagation(); onOpenModal(rec); }}
-          className="absolute bottom-2 right-2 w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:shadow-primary/40"
+          className="absolute bottom-2 right-2 w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:shadow-primary/40 focus-ring interactive-soft"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -269,7 +269,7 @@ function HeroBanner({ rec, onOpenModal }: { rec: Recommendation; onOpenModal: (r
           {rec.genres.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {rec.genres.slice(0, 3).map((g) => (
-                <span key={g} className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-md">{g}</span>
+                <span key={g} className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-md border border-white/10">{g}</span>
               ))}
             </div>
           )}
@@ -279,7 +279,7 @@ function HeroBanner({ rec, onOpenModal }: { rec: Recommendation; onOpenModal: (r
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onOpenModal(rec); }}
-          className="self-start text-sm bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl transition-all font-semibold shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5"
+          className="self-start text-sm bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl transition-all font-semibold shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5 focus-ring interactive-soft"
         >
           + В коллекцию
         </button>
@@ -361,7 +361,7 @@ function HeroCarousel({
           {rec.genres.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {rec.genres.slice(0, 3).map((g) => (
-                <span key={g} className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-md">{g}</span>
+                <span key={g} className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-md border border-white/10">{g}</span>
               ))}
             </div>
           )}
@@ -371,7 +371,7 @@ function HeroCarousel({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onOpenModal(rec); }}
-          className="self-start text-sm bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl transition-all font-semibold shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5"
+          className="self-start text-sm bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-xl transition-all font-semibold shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5 focus-ring interactive-soft"
         >
           + В коллекцию
         </button>
@@ -384,7 +384,7 @@ function HeroCarousel({
               key={i}
               onClick={(e) => { e.stopPropagation(); goTo(i); }}
               className={cn(
-                "rounded-full transition-all duration-300",
+                "rounded-full transition-all duration-300 focus-ring",
                 i === idx
                   ? "w-6 h-2 bg-primary"
                   : "w-2 h-2 bg-white/30 hover:bg-white/50"
@@ -400,7 +400,7 @@ function HeroCarousel({
             key={i}
             onClick={(e) => { e.stopPropagation(); goTo(i); }}
             className={cn(
-              "text-sm transition-all duration-200",
+              "text-sm transition-all duration-200 focus-ring rounded-lg px-1.5",
               i === idx ? "opacity-100 scale-110" : "opacity-40 hover:opacity-70"
             )}
           >

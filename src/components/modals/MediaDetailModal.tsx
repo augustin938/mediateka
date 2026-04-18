@@ -134,7 +134,7 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
 
       <div className="relative w-full max-w-lg glass rounded-2xl overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto scrollbar-hide">
         <button onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center transition-colors">
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-background/40 hover:bg-background/60 border border-border/60 flex items-center justify-center transition-colors focus-ring">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -194,7 +194,7 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-4 border-t border-white/5 pt-4">
+        <div className="px-6 pb-6 space-y-4 border-t border-border/60 pt-4">
           {item.inCollection ? (
             <>
               <div className="flex items-center gap-2 text-sm text-emerald-400">
@@ -213,7 +213,7 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground/80">🏷 Теги</p>
                   <button onClick={() => setShowTagInput((s) => !s)}
-                    className="text-xs text-primary hover:text-primary/80 transition-colors">
+                    className="text-xs text-primary hover:text-primary/80 transition-colors focus-ring rounded-lg px-2 py-1">
                     + Создать тег
                   </button>
                 </div>
@@ -223,16 +223,16 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                     <input value={newTagName} onChange={(e) => setNewTagName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
                       placeholder="Название тега..."
-                      className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
+                      className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus-ring rounded-lg" />
                     <div className="flex gap-1">
                       {TAG_COLORS.map((c) => (
                         <button key={c} onClick={() => setNewTagColor(c)}
-                          className={cn("w-4 h-4 rounded-full transition-transform", newTagColor === c && "ring-2 ring-offset-1 ring-offset-background ring-white scale-125")}
+                          className={cn("w-4 h-4 rounded-full transition-transform focus-ring", newTagColor === c && "ring-2 ring-offset-1 ring-offset-background ring-primary/60 scale-125")}
                           style={{ backgroundColor: c }} />
                       ))}
                     </div>
                     <button onClick={handleCreateTag}
-                      className="text-xs bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 transition-colors">
+                      className="text-xs bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 transition-colors focus-ring">
                       ОК
                     </button>
                   </div>
@@ -270,17 +270,17 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
                 {STATUSES.map((status) => (
                   <button key={status} onClick={() => setSelectedStatus(status)}
                     className={cn(
-                      "text-xs px-3 py-2 rounded-xl border transition-all duration-200 font-medium",
+                      "text-xs px-3 py-2 rounded-xl border transition-all duration-200 font-medium focus-ring",
                       selectedStatus === status
                         ? STATUS_COLORS[status] + " ring-2 ring-offset-1 ring-offset-background ring-current/30"
-                        : "border-white/10 text-muted-foreground hover:border-white/20"
+                        : "border-border/70 text-muted-foreground hover:border-primary/20 hover:text-foreground"
                     )}>
                     {STATUS_LABELS[status]}
                   </button>
                 ))}
               </div>
               <button onClick={handleAdd} disabled={loading}
-                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-all duration-200 text-sm">
+                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-all duration-200 text-sm focus-ring interactive-soft">
                 {loading ? "Добавление..." : "Добавить в коллекцию →"}
               </button>
             </>

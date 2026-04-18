@@ -173,11 +173,11 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
         </div>
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
           placeholder="Поиск фильмов, книг, игр..."
-          className="w-full bg-card/50 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-muted-foreground/50 font-medium"
+          className="w-full bg-card/50 border border-border/70 rounded-2xl pl-12 pr-12 py-4 text-base md:text-lg focus-ring transition-all placeholder:text-muted-foreground/50 font-medium backdrop-blur-md"
           autoFocus />
         {query && (
           <button onClick={() => { setQuery(""); resetSections(); setHasSearched(false); }}
-            className="absolute inset-y-0 right-4 flex items-center text-muted-foreground hover:text-foreground transition-colors">
+            className="absolute inset-y-0 right-4 flex items-center text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-xl px-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -192,7 +192,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
             {TYPE_OPTIONS.map((opt) => (
               <button key={opt.value} onClick={() => setTypeFilter(opt.value)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all border",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all border focus-ring",
                   typeFilter === opt.value
                     ? "bg-primary/15 text-primary border-primary/30"
                     : "border-border text-muted-foreground hover:text-foreground hover:border-primary/20"
@@ -203,7 +203,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
           </div>
           <button onClick={() => setFiltersOpen((o) => !o)}
             className={cn(
-              "ml-auto flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border transition-all",
+              "ml-auto flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border transition-all focus-ring",
               filtersOpen || activeFiltersCount > 0
                 ? "border-primary/30 text-primary bg-primary/10"
                 : "border-border text-muted-foreground hover:border-primary/20"
@@ -220,20 +220,20 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Период</label>
               <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}
-                className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 cursor-pointer">
+                className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus-ring cursor-pointer">
                 {YEAR_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Сортировка</label>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/40 cursor-pointer">
+                className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus-ring cursor-pointer">
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             {activeFiltersCount > 0 && (
               <button onClick={() => { setTypeFilter("all"); setYearFilter(""); setSortBy("relevance"); }}
-                className="text-xs text-red-400 hover:text-red-300 border border-red-500/20 px-3 py-2 rounded-xl transition-all">
+                className="text-xs text-red-400 hover:text-red-300 border border-red-500/20 px-3 py-2 rounded-xl transition-all focus-ring">
                 Сбросить всё
               </button>
             )}
@@ -280,7 +280,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
             {section.state.hasMore && (
               <div className="flex justify-center pt-2">
                 <button onClick={() => loadMore(section.key)} disabled={section.state.loadingMore}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50">
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50 focus-ring interactive-soft bg-card/20 backdrop-blur-md">
                   {section.state.loadingMore ? (
                     <><div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> Загрузка...</>
                   ) : "Показать ещё"}

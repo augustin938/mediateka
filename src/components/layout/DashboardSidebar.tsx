@@ -81,7 +81,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         title={compact ? item.label : undefined}
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
-          active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+          active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
           compact && "justify-center px-2"
         )}
       >
@@ -101,8 +101,8 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
   const sidebarContent = (compact = false) => (
     <div className="flex flex-col h-full">
-      <div className="flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0">
-        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center h-16 px-4 border-b border-border/60 flex-shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0 focus-ring rounded-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/favicon.ico" alt="logo" className="w-6 h-6 flex-shrink-0" />
           <span className={cn(
@@ -118,11 +118,11 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         {navItems.map((item) => <NavLink key={item.href} item={item} compact={compact} />)}
       </nav>
 
-      <div className="flex-shrink-0 p-3 border-t border-white/5 space-y-1">
+      <div className="flex-shrink-0 p-3 border-t border-border/60 space-y-1">
         <Link
           href="/profile"
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-white/5 group",
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-muted/40 group focus-ring",
             compact && "justify-center px-2"
           )}
         >
@@ -139,7 +139,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         <button
           onClick={handleSignOut}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all",
+            "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all focus-ring",
             compact && "justify-center px-2"
           )}
         >
@@ -156,7 +156,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={cn(
-          "hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300 ease-in-out overflow-hidden",
+          "hidden lg:flex flex-col flex-shrink-0 border-r border-border/60 bg-background/65 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300 ease-in-out overflow-hidden",
           expanded ? "w-56" : "w-16"
         )}
       >
@@ -165,7 +165,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
 
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center text-xl"
+        className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center text-xl focus-ring interactive-soft"
       >
         ☰
       </button>
@@ -173,22 +173,22 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
       {mobileOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-white/10 lg:hidden flex flex-col animate-slide-in-right">
-            <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
-              <Link href="/dashboard" className="flex items-center gap-2">
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-background/85 backdrop-blur-xl border-r border-border/70 lg:hidden flex flex-col animate-slide-in-right">
+            <div className="flex items-center justify-between h-16 px-4 border-b border-border/60">
+              <Link href="/dashboard" className="flex items-center gap-2 focus-ring rounded-xl">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/favicon.ico" alt="logo" className="w-6 h-6" />
                 <span className="font-display text-lg font-bold text-gradient">Медиатека</span>
               </Link>
-              <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground text-xl">✕</button>
+              <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground text-xl focus-ring rounded-lg">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
               {navItems.map((item) => <NavLink key={item.href} item={item} />)}
             </div>
-            <div className="p-3 border-t border-white/5 space-y-1">
+            <div className="p-3 border-t border-border/60 space-y-1">
               <Link
                 href="/profile"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-white/5 group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-muted/40 group focus-ring"
               >
                 <div className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all flex-shrink-0">
                   <Avatar image={user.image} name={user.name} />
@@ -198,7 +198,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               </Link>
-              <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all">
+              <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all focus-ring">
                 <span>🚪</span> Выйти
               </button>
             </div>

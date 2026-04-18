@@ -82,7 +82,7 @@ export default function SiteFooter() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <footer className="relative mt-12 border-t border-white/10 bg-background/70 backdrop-blur">
+    <footer className="relative mt-12 border-t border-border/60 bg-background/70 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
@@ -120,7 +120,7 @@ export default function SiteFooter() {
                     target={item.href.startsWith("mailto:") ? undefined : "_blank"}
                     rel={item.href.startsWith("mailto:") ? undefined : "noreferrer"}
                     aria-label={item.label}
-                    className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+                    className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/30 backdrop-blur-md px-3 py-1.5 text-xs text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-ring"
                   >
                     <span className="transition-transform duration-200 group-hover:scale-110">
                       {item.icon}
@@ -159,12 +159,12 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-muted-foreground">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4 text-xs text-muted-foreground">
           <p>© {year} Mediateka by Augustin . All rights reserved.</p>
           <button
             type="button"
             onClick={scrollToTop}
-            className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+            className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/30 backdrop-blur-md px-3 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-ring"
           >
             <span>Наверх</span>
             <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 fill-current">

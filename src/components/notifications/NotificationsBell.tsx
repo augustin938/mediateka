@@ -89,8 +89,8 @@ export default function NotificationsBell() {
       <button
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "relative text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all duration-200",
-          open && "border-primary/30 text-foreground"
+          "relative text-muted-foreground hover:text-foreground border border-border/70 hover:border-border px-3 py-1.5 rounded-lg transition-all duration-200 bg-card/30 backdrop-blur-md focus-ring",
+          open && "border-primary/30 text-foreground shadow-glow-sm"
         )}
       >
         🔔
@@ -103,14 +103,13 @@ export default function NotificationsBell() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden"
-          style={{ backgroundColor: "hsl(var(--card))" }}
+          className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card/90 backdrop-blur-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <h3 className="font-semibold text-foreground text-sm">Уведомления</h3>
             {unread > 0 && (
-              <button onClick={markAllRead} className="text-xs text-primary hover:underline">
+              <button onClick={markAllRead} className="text-xs text-primary hover:underline focus-ring rounded-md px-1.5 py-1">
                 Прочитать все
               </button>
             )}
@@ -153,7 +152,7 @@ export default function NotificationsBell() {
                   </div>
                   <button
                     onClick={(e) => deleteNotif(e, n.id)}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all text-xs flex-shrink-0 mt-1"
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all text-xs flex-shrink-0 mt-1 focus-ring rounded-md px-1"
                   >
                     ✕
                   </button>

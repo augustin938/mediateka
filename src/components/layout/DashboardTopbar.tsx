@@ -171,15 +171,15 @@ function ThemePicker() {
         onClick={() => setOpen((o) => !o)}
         title="Сменить тему"
         className={cn(
-          "text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 w-8 h-8 rounded-lg flex items-center justify-center transition-all text-sm",
-          open && "border-primary/40 text-foreground bg-primary/10"
+          "text-muted-foreground hover:text-foreground border border-border/70 hover:border-border w-8 h-8 rounded-lg flex items-center justify-center transition-all text-sm focus-ring",
+          open && "border-primary/40 text-foreground bg-primary/10 shadow-glow-sm"
         )}
       >
         {currentTheme.emoji}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-2xl z-50 p-3 min-w-[200px] animate-fade-in-scale">
+        <div className="absolute right-0 top-full mt-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-50 p-3 min-w-[200px] animate-fade-in-scale">
           <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Тема оформления</p>
           <div className="space-y-1">
             {THEMES.map((theme) => (
@@ -187,7 +187,7 @@ function ThemePicker() {
                 key={theme.id}
                 onClick={() => handleSelect(theme.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all",
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all focus-ring",
                   current === theme.id
                     ? "bg-primary/20 text-primary border border-primary/30"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -197,11 +197,11 @@ function ThemePicker() {
                 <span className="font-medium">{theme.label}</span>
                 <div className="ml-auto flex gap-1">
                   <div
-                    className="w-3 h-3 rounded-full border border-white/10"
+                    className="w-3 h-3 rounded-full border border-border/70"
                     style={{ background: `hsl(${theme.vars["--primary"]})` }}
                   />
                   <div
-                    className="w-3 h-3 rounded-full border border-white/10"
+                    className="w-3 h-3 rounded-full border border-border/70"
                     style={{ background: `hsl(${theme.vars["--background"]})` }}
                   />
                 </div>
@@ -270,7 +270,7 @@ export default function DashboardTopbar() {
   }, [searchQuery]);
 
   return (
-    <header className="sticky top-0 z-30 h-14 border-b border-white/5 backdrop-blur-xl bg-background/80 flex items-center px-4 sm:px-6 gap-4">
+    <header className="sticky top-0 z-30 h-14 border-b border-border/60 backdrop-blur-xl bg-background/70 flex items-center px-4 sm:px-6 gap-4">
       <div className="flex-shrink-0 hidden sm:block">
         <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
       </div>
@@ -279,8 +279,8 @@ export default function DashboardTopbar() {
         <div
           onClick={() => { setSearchOpen(true); inputRef.current?.focus(); }}
           className={cn(
-            "flex items-center gap-2 border rounded-xl px-3 py-1.5 cursor-text transition-all duration-200",
-            searchOpen ? "border-primary/40 bg-card" : "border-border bg-muted/20 hover:border-primary/20"
+            "flex items-center gap-2 border rounded-xl px-3 py-1.5 cursor-text transition-all duration-200 bg-card/40 backdrop-blur-md",
+            searchOpen ? "border-primary/40 shadow-glow-sm" : "border-border/70 hover:border-primary/20"
           )}
         >
           <span className="text-muted-foreground text-sm">🔍</span>
@@ -297,13 +297,13 @@ export default function DashboardTopbar() {
               }
             }}
             placeholder="Поиск... (Ctrl+K)"
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus-ring rounded-lg"
           />
           {searching && <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />}
         </div>
 
         {searchOpen && searchQuery.length >= 2 && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card">
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card/90 backdrop-blur-xl">
             {searchResults.length > 0 ? (
               <>
                 <div className="p-2 space-y-1">
@@ -331,7 +331,7 @@ export default function DashboardTopbar() {
                 <div className="border-t border-border p-2">
                   <button
                     onClick={() => { setSearchOpen(false); router.push(`/dashboard?q=${encodeURIComponent(searchQuery)}`); }}
-                    className="w-full text-xs text-muted-foreground hover:text-primary text-left px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+                    className="w-full text-xs text-muted-foreground hover:text-primary text-left px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors focus-ring">
                     Все результаты для «{searchQuery}» →
                   </button>
                 </div>

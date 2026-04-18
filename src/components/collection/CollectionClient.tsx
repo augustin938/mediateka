@@ -339,7 +339,7 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
             <div className={cn("absolute top-0 left-0 right-0 h-0.5", STATUS_BAR_COLORS[item.status])}/>
 
             {item.rating && (
-              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center border border-white/10">
+              <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center border border-black/10 dark:border-white/10 shadow-lg">
                 <span className="text-amber-400 font-bold text-[11px] leading-none">{item.rating}</span>
               </div>
             )}
@@ -364,12 +364,13 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
               <div className="flex gap-1.5 pt-1">
                 <button
                   onClick={e=>{e.stopPropagation();onEdit(item);}}
-                  className="flex-1 text-[10px] bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg backdrop-blur-sm transition-colors font-semibold">
+                  className="flex-1 text-[10px] bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg backdrop-blur-sm transition-colors font-semibold focus-ring interactive-soft"
+                >
                   ✏️ Изменить
                 </button>
                 <button
                   onClick={e=>{e.stopPropagation();onRemove(item.id);}}
-                  className="text-[10px] bg-red-500/40 hover:bg-red-500/60 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors">
+                  className="text-[10px] bg-red-500/40 hover:bg-red-500/60 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft">
                   🗑
                 </button>
               </div>
@@ -509,7 +510,7 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
 
           <div className="absolute inset-0 flex items-end p-5 gap-4">
             {item.mediaItem.posterUrl && (
-              <div className="flex-shrink-0 w-24 h-36 rounded-xl overflow-hidden shadow-2xl border border-white/10">
+              <div className="flex-shrink-0 w-24 h-36 rounded-xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.mediaItem.posterUrl} alt="" className="w-full h-full object-cover"/>
               </div>
@@ -538,7 +539,7 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
           </div>
 
           <button onClick={onClose}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-colors text-sm">
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-colors text-sm focus-ring interactive-soft border border-black/10 dark:border-white/10 shadow-lg">
             ✕
           </button>
 

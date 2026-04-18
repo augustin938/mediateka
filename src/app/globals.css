@@ -26,6 +26,10 @@
     --input: 220 14% 88%;
     --ring: 263 90% 58%;
     --radius: 0.875rem;
+    --shadow-color: 222 47% 8%;
+    --shadow-strength: 0.12;
+    --focus-ring: var(--primary);
+    --focus-ring-alpha: 0.40;
   }
 
   .dark {
@@ -49,6 +53,10 @@
     --input: 224 24% 13%;
     --ring: 263 90% 68%;
     --radius: 0.875rem;
+    --shadow-color: 0 0% 0%;
+    --shadow-strength: 0.45;
+    --focus-ring: var(--primary);
+    --focus-ring-alpha: 0.35;
   }
 
   * {
@@ -68,6 +76,7 @@
     transition: background-color 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   .dark body {
@@ -112,6 +121,24 @@
 }
 
 @layer utilities {
+  .surface {
+    background: hsl(var(--card) / 0.75);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid hsl(var(--border) / 0.75);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 12px 40px hsl(var(--shadow-color) / calc(var(--shadow-strength) * 0.55));
+  }
+
+  :root:not(.dark) .surface {
+    background: hsl(var(--card) / 0.88);
+    border: 1px solid hsl(var(--border));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.65) inset,
+      0 18px 50px hsl(var(--shadow-color) / calc(var(--shadow-strength) * 0.45));
+  }
+
   .glass {
     background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(20px) saturate(150%);
@@ -308,6 +335,19 @@
   .font-display { font-family: "Syne", sans-serif; letter-spacing: -0.02em; }
 
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background;
+    --tw-ring-color: hsl(var(--focus-ring) / var(--focus-ring-alpha));
+  }
+
+  .interactive-soft {
+    @apply transition-all duration-200 ease-smooth;
+  }
+
+  .interactive-soft:hover {
+    transform: translateY(-1px);
+  }
+
+  .interactive-soft:active {
+    transform: translateY(0);
   }
 }
