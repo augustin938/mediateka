@@ -1,6 +1,4 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ── Images ────────────────────────────────────────────────────────────────
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "kinopoiskapiunofficial.tech" },
@@ -10,15 +8,14 @@ const nextConfig = {
       { protocol: "https", hostname: "images.igdb.com" },
       { protocol: "https", hostname: "cdn.cloudflare.steamstatic.com" },
       { protocol: "https", hostname: "*.cloudinary.com" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" }, // Google OAuth avatars
-      { protocol: "https", hostname: "avatars.githubusercontent.com" }, // GitHub OAuth avatars
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
 
-  // ── Security Headers ──────────────────────────────────────────────────────
   async headers() {
     return [
       {
@@ -44,7 +41,8 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval needed for Next.js dev
+              // Без unsafe-eval dev-сборка Next.js ломается из-за eval в tooling.
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
@@ -57,12 +55,10 @@ const nextConfig = {
     ];
   },
 
-  // ── Compiler ──────────────────────────────────────────────────────────────
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // ── Experimental ─────────────────────────────────────────────────────────
   experimental: {
     optimizePackageImports: ["lucide-react", "sonner"],
   },
