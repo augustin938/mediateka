@@ -319,7 +319,14 @@ function GridView({
   onRemove,
   selectedIds,
   onToggleSelect,
-}: ViewProps & { selectedIds: string[]; onToggleSelect: (id: string) => void }) {
+  selectionMode,
+  onClickItem,
+}: ViewProps & {
+  selectedIds: string[];
+  onToggleSelect: (id: string, e?: React.MouseEvent) => void;
+  selectionMode: boolean;
+  onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
+}) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {items.map(item=>(
@@ -330,10 +337,10 @@ function GridView({
             "transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl",
             STATUS_GLOW[item.status]
           )}
-          onClick={()=>onSelect(item)}>
+          onClick={(e)=>onClickItem(item, e)}>
 
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id); }}
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
             className={cn(
               "absolute top-2 left-2 z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm",
               "bg-black/50 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg",
@@ -426,19 +433,26 @@ function ListView({
   onRemove,
   selectedIds,
   onToggleSelect,
-}: ViewProps & { selectedIds: string[]; onToggleSelect: (id: string) => void }) {
+  selectionMode,
+  onClickItem,
+}: ViewProps & {
+  selectedIds: string[];
+  onToggleSelect: (id: string, e?: React.MouseEvent) => void;
+  selectionMode: boolean;
+  onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
+}) {
   return (
     <div className="space-y-1.5">
       {items.map((item, idx) => (
         <div key={item.id}
           className="group relative glass rounded-xl overflow-hidden cursor-pointer hover:bg-card/90 transition-all duration-200 hover:shadow-lg"
-          onClick={()=>onSelect(item)}>
+          onClick={(e)=>onClickItem(item, e)}>
 
           <div className={cn("absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl", STATUS_BAR_COLORS[item.status])}/>
 
           <div className="flex items-center gap-3 p-3 pl-4">
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id); }}
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
               className={cn(
                 "w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0",
                 "bg-muted/30 border border-border/70 hover:border-primary/30 hover:bg-muted/50 transition-all",
@@ -815,6 +829,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const [selectedIds,  setSelectedIds]  = useState<string[]>([]);
   const [bulkStatus,   setBulkStatus]   = useState<CollectionStatus>("WANT");
   const deleteOpRef = useRef<{ id: string; cancelled: boolean } | null>(null);
+  const lastSelectedIdRef = useRef<string | null>(null);
+  const selectionMode = selectedIds.length > 0;
 
   useEffect(()=>{ fetch("/api/tags").then(r=>r.json()).then(d=>setAllTags(d.tags??[])); },[]);
   useEffect(()=>{ if(!editingId) return; const item=items.find(i=>i.id===editingId); setItemTags((item as any)?.tags??[]); },[editingId,items]);
@@ -859,6 +875,59 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
     const visible = new Set(filtered.map((i) => i.id));
     setSelectedIds((prev) => prev.filter((id) => visible.has(id)));
   }, [filtered]);
+
+  const toggleSelect = (id: string, e?: React.MouseEvent) => {
+    const isShift = !!e?.shiftKey;
+    if (isShift && lastSelectedIdRef.current) {
+      const ids = filtered.map((x) => x.id);
+      const a = ids.indexOf(lastSelectedIdRef.current);
+      const b = ids.indexOf(id);
+      if (a !== -1 && b !== -1) {
+        const [from, to] = a < b ? [a, b] : [b, a];
+        const range = ids.slice(from, to + 1);
+        setSelectedIds((prev) => Array.from(new Set([...prev, ...range])));
+        return;
+      }
+    }
+
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    lastSelectedIdRef.current = id;
+  };
+
+  const selectAllVisible = () => setSelectedIds(filtered.map((x) => x.id));
+  const invertVisible = () => {
+    const visible = filtered.map((x) => x.id);
+    const selected = new Set(selectedIds);
+    setSelectedIds(visible.filter((id) => !selected.has(id)));
+  };
+
+  useEffect(() => {
+    if (!selectionMode) return;
+
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || (t as any)?.isContentEditable) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedIds([]);
+        return;
+      }
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        removeItemsWithUndo(selectedIds);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        selectAllVisible();
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [selectionMode, selectedIds, filtered]);
 
   const counts = useMemo(()=>{
     const c: Record<string,number> = {all:items.length};
@@ -1061,6 +1130,18 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-foreground">Выбрано: {selectedIds.length}</span>
             <button
+              onClick={selectAllVisible}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-lg px-2 py-1"
+            >
+              Выбрать всё
+            </button>
+            <button
+              onClick={invertVisible}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-lg px-2 py-1"
+            >
+              Инвертировать
+            </button>
+            <button
               onClick={() => setSelectedIds([])}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-lg px-2 py-1"
             >
@@ -1214,6 +1295,14 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         const books  = filtered.filter(i=>i.mediaItem.type==="book");
         const games  = filtered.filter(i=>i.mediaItem.type==="game");
 
+        const onClickItem = (item: CollectionItemWithMedia, e: React.MouseEvent) => {
+          if (selectionMode) {
+            toggleSelect(item.id, e);
+            return;
+          }
+          setDetailItem(item);
+        };
+
         return (
           <div className="space-y-14">
 
@@ -1247,8 +1336,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
-                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
+                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
               </div>
             )}
 
@@ -1279,8 +1368,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
-                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
+                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
               </div>
             )}
 
@@ -1310,8 +1399,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
-                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
+                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
               </div>
             )}
 
@@ -1320,9 +1409,20 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
       })()}
 
       {viewMode!=="shelf" && filtered.length>0 && !(statusFilter==="all" && typeFilter==="all") && (
+        (() => {
+          const onClickItem = (item: CollectionItemWithMedia, e: React.MouseEvent) => {
+            if (selectionMode) {
+              toggleSelect(item.id, e);
+              return;
+            }
+            setDetailItem(item);
+          };
+          return (
         viewMode==="grid"
-          ? <GridView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
-          : <ListView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
+          ? <GridView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+          : <ListView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+          );
+        })()
       )}
 
       {detailItem && (
