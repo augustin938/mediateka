@@ -48,9 +48,16 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
   const [user, setUser] = useState(initialUser);
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
 
-  // В десктопе сайдбар раскрывается при наведении.
-  const expanded = hovered;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mediateka-sidebar-pinned");
+      if (saved === "1") setPinned(true);
+    } catch {}
+  }, []);
+
+  const expanded = pinned || hovered;
 
   useEffect(() => { setUser(initialUser); }, [initialUser]);
 
@@ -82,6 +89,7 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
           active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+          "focus-ring",
           compact && "justify-center px-2"
         )}
       >
@@ -112,6 +120,28 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
             Медиатека
           </span>
         </Link>
+        <div className={cn("ml-auto flex items-center", compact && "opacity-0 pointer-events-none")}>
+          <button
+            type="button"
+            title={pinned ? "Открепить сайдбар" : "Закрепить сайдбар"}
+            onClick={() => {
+              setPinned((p) => {
+                const next = !p;
+                try { localStorage.setItem("mediateka-sidebar-pinned", next ? "1" : "0"); } catch {}
+                return next;
+              });
+              setHovered(false);
+            }}
+            className={cn(
+              "w-8 h-8 rounded-lg border transition-all text-sm flex items-center justify-center",
+              "bg-card/30 backdrop-blur-md border-border/70 hover:border-primary/30 text-muted-foreground hover:text-foreground",
+              "focus-ring interactive-soft",
+              pinned && "bg-primary/10 border-primary/30 text-primary shadow-glow-sm"
+            )}
+          >
+            📌
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
@@ -153,8 +183,8 @@ export default function DashboardSidebar({ user: initialUser }: SidebarProps) {
   return (
     <>
       <aside
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => { if (!pinned) setHovered(true); }}
+        onMouseLeave={() => { if (!pinned) setHovered(false); }}
         className={cn(
           "hidden lg:flex flex-col flex-shrink-0 border-r border-border/60 bg-background/65 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300 ease-in-out overflow-hidden",
           expanded ? "w-56" : "w-16"

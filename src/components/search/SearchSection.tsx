@@ -7,6 +7,10 @@ import MediaCardSkeleton from "./MediaCardSkeleton";
 import MediaDetailModal from "@/components/modals/MediaDetailModal";
 import { cn } from "@/lib/utils";
 
+const RECENT_SEARCHES_KEY = "mediateka-recent-searches";
+const RECENT_SEARCHES_MAX = 8;
+const EXAMPLE_QUERIES = ["Интерстеллар", "Ведьмак 3", "Гарри Поттер", "Нолан", "Сапковский"];
+
 interface Props {
   initialQuery?: string;
   initialType?: string;
@@ -59,6 +63,8 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const [typeFilter, setTypeFilter] = useState(initialType ?? "all");
   const [yearFilter, setYearFilter] = useState("");
@@ -75,6 +81,26 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     setGames({ items: [], page: 1, hasMore: false, loadingMore: false });
   };
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.filter((x) => typeof x === "string").slice(0, RECENT_SEARCHES_MAX));
+      }
+    } catch {}
+  }, []);
+
+  const pushRecent = (q: string) => {
+    const cleaned = q.trim();
+    if (cleaned.length < 2) return;
+    setRecentSearches((prev) => {
+      const next = [cleaned, ...prev.filter((x) => x !== cleaned)].slice(0, RECENT_SEARCHES_MAX);
+      try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
   const search = useCallback(async (q: string, page = 1, append = false) => {
     if (q.length < 2) { resetSections(); setHasSearched(false); return; }
     if (!append) setLoading(true);
@@ -82,9 +108,16 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
 
     const types = typeFilter === "all" ? ["movie", "book", "game"] : [typeFilter];
 
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     await Promise.all(types.map(async (t) => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=${t}&page=${page}`);
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(q)}&type=${t}&page=${page}`,
+          { signal: controller.signal }
+        );
         const data = await res.json();
         const newItems: SearchResultItem[] = data.results ?? [];
         const hasMore: boolean = data.hasMore ?? false;
@@ -96,10 +129,13 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
           hasMore,
           loadingMore: false,
         }));
-      } catch {}
+      } catch (e) {
+        if ((e as any)?.name === "AbortError") return;
+      }
     }));
 
     setLoading(false);
+    pushRecent(q);
   }, [typeFilter]);
 
   useEffect(() => {
@@ -242,10 +278,39 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
       </div>
 
       {!hasSearched && (
-        <div className="text-center py-16 space-y-4 text-muted-foreground">
+        <div className="text-center py-12 space-y-4 text-muted-foreground">
           <div className="text-5xl">🔍</div>
-          <p className="text-lg">Введите минимум 2 символа для поиска</p>
-          <p className="text-sm opacity-70">Поиск по фильмам, книгам и играм</p>
+          <p className="text-lg">Начни с поиска</p>
+          <p className="text-sm opacity-70">Минимум 2 символа. Можно искать по названию, автору, режиссёру.</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            {EXAMPLE_QUERIES.map((q) => (
+              <button
+                key={q}
+                onClick={() => setQuery(q)}
+                className="text-xs px-3 py-1.5 rounded-full border border-border/70 bg-card/30 backdrop-blur-md hover:border-primary/30 hover:bg-primary/10 hover:text-foreground transition-all focus-ring"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {recentSearches.length > 0 && (
+            <div className="pt-2">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground/70 mb-2">Недавние запросы</p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {recentSearches.slice(0, 6).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setQuery(q)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-border hover:border-primary/30 hover:text-foreground transition-all focus-ring"
+                  >
+                    🕘 {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -312,7 +312,14 @@ function ShelfView({ items, onSelect }: ShelfProps) {
 
 interface ViewProps { items:CollectionItemWithMedia[]; onSelect:(i:CollectionItemWithMedia)=>void; onEdit:(i:CollectionItemWithMedia)=>void; onRemove:(id:string)=>void; }
 
-function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
+function GridView({
+  items,
+  onSelect,
+  onEdit,
+  onRemove,
+  selectedIds,
+  onToggleSelect,
+}: ViewProps & { selectedIds: string[]; onToggleSelect: (id: string) => void }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {items.map(item=>(
@@ -324,6 +331,19 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
             STATUS_GLOW[item.status]
           )}
           onClick={()=>onSelect(item)}>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id); }}
+            className={cn(
+              "absolute top-2 left-2 z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm",
+              "bg-black/50 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg",
+              "transition-all hover:bg-black/60 focus-ring",
+              selectedIds.includes(item.id) && "bg-primary/60 border-primary/40"
+            )}
+            title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
+          >
+            {selectedIds.includes(item.id) ? "✓" : "◻"}
+          </button>
 
           <div className="aspect-[2/3] bg-muted/30 relative overflow-hidden">
             {item.mediaItem.posterUrl
@@ -399,7 +419,14 @@ function GridView({ items, onSelect, onEdit, onRemove }: ViewProps) {
   );
 }
 
-function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
+function ListView({
+  items,
+  onSelect,
+  onEdit,
+  onRemove,
+  selectedIds,
+  onToggleSelect,
+}: ViewProps & { selectedIds: string[]; onToggleSelect: (id: string) => void }) {
   return (
     <div className="space-y-1.5">
       {items.map((item, idx) => (
@@ -410,6 +437,18 @@ function ListView({ items, onSelect, onEdit, onRemove }: ViewProps) {
           <div className={cn("absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl", STATUS_BAR_COLORS[item.status])}/>
 
           <div className="flex items-center gap-3 p-3 pl-4">
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id); }}
+              className={cn(
+                "w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0",
+                "bg-muted/30 border border-border/70 hover:border-primary/30 hover:bg-muted/50 transition-all",
+                "focus-ring",
+                selectedIds.includes(item.id) && "bg-primary/15 border-primary/30 text-primary"
+              )}
+              title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
+            >
+              {selectedIds.includes(item.id) ? "✓" : "◻"}
+            </button>
             <span className="text-xs text-muted-foreground/40 font-mono w-5 text-right flex-shrink-0 select-none">
               {idx+1}
             </span>
@@ -772,6 +811,10 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const [editReview,   setEditReview]   = useState("");
   const [allTags,      setAllTags]      = useState<Tag[]>([]);
   const [itemTags,     setItemTags]     = useState<Tag[]>([]);
+  const [unratedOnly,  setUnratedOnly]  = useState(false);
+  const [selectedIds,  setSelectedIds]  = useState<string[]>([]);
+  const [bulkStatus,   setBulkStatus]   = useState<CollectionStatus>("WANT");
+  const deleteOpRef = useRef<{ id: string; cancelled: boolean } | null>(null);
 
   useEffect(()=>{ fetch("/api/tags").then(r=>r.json()).then(d=>setAllTags(d.tags??[])); },[]);
   useEffect(()=>{ if(!editingId) return; const item=items.find(i=>i.id===editingId); setItemTags((item as any)?.tags??[]); },[editingId,items]);
@@ -797,6 +840,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
     }
     if(statusFilter!=="all") r = r.filter(i=>i.status===statusFilter);
     if(typeFilter!=="all")   r = r.filter(i=>i.mediaItem.type===typeFilter);
+    if(unratedOnly) r = r.filter(i=>i.rating == null);
     if(yearFrom) r = r.filter(i=>(i.mediaItem.year??0)>=parseInt(yearFrom));
     if(yearTo)   r = r.filter(i=>(i.mediaItem.year??9999)<=parseInt(yearTo));
     if(genreFilter) r = r.filter(i=>i.mediaItem.genres?.some(g=>g.toLowerCase().includes(genreFilter.toLowerCase())));
@@ -808,7 +852,13 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
       return new Date(b.addedAt).getTime()-new Date(a.addedAt).getTime();
     });
     return r;
-  },[items,statusFilter,typeFilter,sortBy,yearFrom,yearTo,genreFilter,searchQuery,tagFilter]);
+  },[items,statusFilter,typeFilter,sortBy,yearFrom,yearTo,genreFilter,searchQuery,tagFilter,unratedOnly]);
+
+  useEffect(() => {
+    // Если элементы ушли из фильтра (или были удалены), чистим выбор.
+    const visible = new Set(filtered.map((i) => i.id));
+    setSelectedIds((prev) => prev.filter((id) => visible.has(id)));
+  }, [filtered]);
 
   const counts = useMemo(()=>{
     const c: Record<string,number> = {all:items.length};
@@ -824,6 +874,26 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
       if(!res.ok) throw new Error();
       toast.success("Статус обновлён");
     } catch { setItems(initialItems); toast.error("Ошибка"); }
+  };
+
+  const updateStatusBulk = async (ids: string[], status: CollectionStatus) => {
+    if (ids.length === 0) return;
+    const snapshot = items;
+    setItems((prev) => prev.map((i) => (ids.includes(i.id) ? { ...i, status } : i)));
+    try {
+      await Promise.all(ids.map(async (id) => {
+        const res = await fetch(`/api/collection/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        if (!res.ok) throw new Error();
+      }));
+      toast.success(`Статус обновлён для: ${ids.length}`);
+    } catch {
+      setItems(snapshot);
+      toast.error("Ошибка обновления статуса");
+    }
   };
 
   const saveEdit = async()=>{
@@ -844,6 +914,45 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
       if(!res.ok) throw new Error();
       toast.success("Удалено из коллекции");
     } catch { setItems(initialItems); toast.error("Ошибка удаления"); }
+  };
+
+  const removeItemsWithUndo = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const snapshot = items;
+    setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
+    setSelectedIds([]);
+    setDetailItem(null);
+
+    const opId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    deleteOpRef.current = { id: opId, cancelled: false };
+
+    const undo = () => {
+      if (deleteOpRef.current?.id === opId) deleteOpRef.current.cancelled = true;
+      setItems(snapshot);
+      toast.success("Отменено");
+    };
+
+    toast("Удалено из коллекции", {
+      description: ids.length === 1 ? "Элемент удалён" : `Удалено элементов: ${ids.length}`,
+      action: { label: "Отменить", onClick: undo },
+    } as any);
+
+    // Даём небольшой буфер на "undo".
+    await new Promise((r) => setTimeout(r, 4500));
+
+    if (deleteOpRef.current?.id !== opId) return;
+    if (deleteOpRef.current?.cancelled) return;
+
+    try {
+      await Promise.all(ids.map(async (id) => {
+        const res = await fetch(`/api/collection/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+      }));
+    } catch {
+      // Если сервер не принял — возвращаем.
+      setItems(snapshot);
+      toast.error("Ошибка удаления");
+    }
   };
 
   const startEdit = (item:CollectionItemWithMedia)=>{ setEditingId(item.id); setEditRating(item.rating??null); setEditReview(item.review??""); setDetailItem(null); };
@@ -882,7 +991,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   };
 
   const resetFilters = ()=>{ setStatusFilter("all"); setTypeFilter("all"); setYearFrom(""); setYearTo(""); setGenreFilter(""); setTagFilter(null); setSearchQuery(""); };
-  const hasActiveFilters = statusFilter!=="all" || typeFilter!=="all" || yearFrom || yearTo || genreFilter || tagFilter || searchQuery.trim();
+  const hasActiveFilters = statusFilter!=="all" || typeFilter!=="all" || unratedOnly || yearFrom || yearTo || genreFilter || tagFilter || searchQuery.trim();
 
   if(items.length===0) return (
     <div className="text-center py-32 space-y-4">
@@ -933,7 +1042,57 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
               : `${STATUS_LABELS[status as CollectionStatus]} · ${counts[status]??0}`}
           </button>
         ))}
+        <button
+          onClick={() => setUnratedOnly((p) => !p)}
+          className={cn(
+            "text-sm px-3.5 py-1.5 rounded-xl border transition-all duration-200 font-medium",
+            unratedOnly
+              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+              : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+          )}
+          title="Показать элементы без оценки"
+        >
+          ⭐ Не оценено
+        </button>
       </div>
+
+      {selectedIds.length > 0 && (
+        <div className="glass rounded-2xl p-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-foreground">Выбрано: {selectedIds.length}</span>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-lg px-2 py-1"
+            >
+              Снять выделение
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={bulkStatus}
+              onChange={(e) => setBulkStatus(e.target.value as CollectionStatus)}
+              className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground cursor-pointer focus-ring"
+            >
+              {(["WANT", "IN_PROGRESS", "COMPLETED", "DROPPED"] as CollectionStatus[]).map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => updateStatusBulk(selectedIds, bulkStatus)}
+              className="text-xs px-3 py-2 rounded-lg bg-primary/15 text-primary border border-primary/25 hover:bg-primary/20 transition-all focus-ring interactive-soft"
+            >
+              Применить статус
+            </button>
+            <button
+              onClick={() => removeItemsWithUndo(selectedIds)}
+              className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-300 border border-red-500/25 hover:bg-red-500/15 transition-all focus-ring interactive-soft"
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
+      )}
 
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
@@ -1088,8 +1247,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
-                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>}
+                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
+                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
               </div>
             )}
 
@@ -1120,8 +1279,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
-                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>}
+                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
+                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
               </div>
             )}
 
@@ -1151,8 +1310,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
-                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>}
+                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
+                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>}
               </div>
             )}
 
@@ -1162,8 +1321,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
 
       {viewMode!=="shelf" && filtered.length>0 && !(statusFilter==="all" && typeFilter==="all") && (
         viewMode==="grid"
-          ? <GridView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
-          : <ListView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem}/>
+          ? <GridView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
+          : <ListView  items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={(id)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])}/>
       )}
 
       {detailItem && (

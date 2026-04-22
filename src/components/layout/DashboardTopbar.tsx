@@ -14,6 +14,19 @@ interface SearchResult {
   posterUrl: string | null;
 }
 
+const RECENT_SEARCHES_KEY = "mediateka-recent-searches";
+const RECENT_SEARCHES_MAX = 8;
+
+type QuickLink = { href: string; label: string; icon: string };
+const QUICK_LINKS: QuickLink[] = [
+  { href: "/dashboard", label: "Поиск", icon: "🔍" },
+  { href: "/collection", label: "Коллекция", icon: "📚" },
+  { href: "/recommendations", label: "Для тебя", icon: "🎯" },
+  { href: "/random", label: "Сегодня", icon: "🎲" },
+  { href: "/friends", label: "Друзья", icon: "👥" },
+  { href: "/quiz", label: "Квиз", icon: "🎮" },
+];
+
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard":       "Поиск",
   "/collection":      "Коллекция",
@@ -223,10 +236,21 @@ export default function DashboardTopbar() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pageTitle = PAGE_TITLES[pathname] ?? "";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.filter((x) => typeof x === "string").slice(0, RECENT_SEARCHES_MAX));
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -241,6 +265,16 @@ export default function DashboardTopbar() {
     setSearchQuery("");
     setSearchResults([]);
   }, [pathname]);
+
+  const pushRecent = (q: string) => {
+    const cleaned = q.trim();
+    if (cleaned.length < 2) return;
+    setRecentSearches((prev) => {
+      const next = [cleaned, ...prev.filter((x) => x !== cleaned)].slice(0, RECENT_SEARCHES_MAX);
+      try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -292,6 +326,7 @@ export default function DashboardTopbar() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && searchQuery.trim().length >= 2) {
                 setSearchOpen(false);
+                pushRecent(searchQuery);
                 router.push(`/dashboard?q=${encodeURIComponent(searchQuery.trim())}`);
                 setSearchQuery("");
               }
@@ -302,15 +337,57 @@ export default function DashboardTopbar() {
           {searching && <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />}
         </div>
 
-        {searchOpen && searchQuery.length >= 2 && (
+        {searchOpen && (
           <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card/90 backdrop-blur-xl">
-            {searchResults.length > 0 ? (
+            {searchQuery.length < 2 ? (
+              <div className="p-2">
+                {recentSearches.length > 0 && (
+                  <div className="mb-2">
+                    <p className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Недавние запросы</p>
+                    <div className="space-y-1">
+                      {recentSearches.slice(0, 6).map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => {
+                            setSearchOpen(false);
+                            pushRecent(q);
+                            router.push(`/dashboard?q=${encodeURIComponent(q)}`);
+                            setSearchQuery("");
+                          }}
+                          className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-primary/10 transition-colors text-left focus-ring"
+                        >
+                          <span className="text-sm">🕘</span>
+                          <span className="text-sm text-foreground truncate">{q}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Быстрые переходы</p>
+                  <div className="grid grid-cols-2 gap-1.5 p-1">
+                    {QUICK_LINKS.map((l) => (
+                      <button
+                        key={l.href}
+                        onClick={() => { setSearchOpen(false); router.push(l.href); }}
+                        className="flex items-center gap-2 px-2 py-2 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-muted/40 transition-all text-left focus-ring"
+                      >
+                        <span className="text-sm">{l.icon}</span>
+                        <span className="text-xs font-medium text-foreground/90 truncate">{l.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : searchResults.length > 0 ? (
               <>
                 <div className="p-2 space-y-1">
                   {searchResults.map((r, i) => (
                     <div key={i}
                       onClick={() => {
                         setSearchOpen(false);
+                        pushRecent(r.title);
                         setSearchQuery("");
                         router.push(`/dashboard?q=${encodeURIComponent(r.title)}&type=${r.type}`);
                       }}
@@ -330,7 +407,7 @@ export default function DashboardTopbar() {
                 </div>
                 <div className="border-t border-border p-2">
                   <button
-                    onClick={() => { setSearchOpen(false); router.push(`/dashboard?q=${encodeURIComponent(searchQuery)}`); }}
+                    onClick={() => { setSearchOpen(false); pushRecent(searchQuery); router.push(`/dashboard?q=${encodeURIComponent(searchQuery)}`); }}
                     className="w-full text-xs text-muted-foreground hover:text-primary text-left px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors focus-ring">
                     Все результаты для «{searchQuery}» →
                   </button>
