@@ -74,7 +74,24 @@ export default function MediaDetailModal({ item, onClose, onAddToCollection }: M
 
       const data = await res.json();
       setCollectionItemId(data.item?.id ?? null);
-      toast.success(`«${item.title}» добавлено в коллекцию!`);
+      const createdId = data.item?.id ?? null;
+      toast.success(`«${item.title}» добавлено в коллекцию!`, {
+        action: createdId
+          ? {
+              label: "Отменить",
+              onClick: async () => {
+                try {
+                  await fetch(`/api/collection/${createdId}`, { method: "DELETE" });
+                  toast.success("Отменено");
+                  // Синхронизируем UI самым надёжным способом.
+                  if (typeof window !== "undefined") window.location.reload();
+                } catch {
+                  toast.error("Не удалось отменить");
+                }
+              },
+            }
+          : undefined,
+      } as any);
       onAddToCollection({ ...item, inCollection: true, collectionStatus: selectedStatus });
       onClose();
     } catch {

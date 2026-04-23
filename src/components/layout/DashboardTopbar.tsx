@@ -306,7 +306,17 @@ export default function DashboardTopbar() {
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-border/60 backdrop-blur-xl bg-background/70 flex items-center px-4 sm:px-6 gap-4">
-      <div className="flex-shrink-0 hidden sm:block">
+      <div className="flex-shrink-0 hidden sm:flex items-center gap-2">
+        {isFriendProfile && (
+          <button
+            type="button"
+            onClick={() => router.push("/friends")}
+            className="text-muted-foreground hover:text-foreground w-9 h-9 rounded-xl flex items-center justify-center border border-border/60 hover:border-primary/30 bg-card/20 hover:bg-muted/30 transition-all focus-ring"
+            title="Назад к друзьям"
+          >
+            ←
+          </button>
+        )}
         <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
       </div>
 
@@ -318,20 +328,6 @@ export default function DashboardTopbar() {
             searchOpen ? "border-primary/40 shadow-glow-sm" : "border-border/70 hover:border-primary/20"
           )}
         >
-          {isFriendProfile && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSearchOpen(false);
-                router.push("/friends");
-              }}
-              className="text-muted-foreground hover:text-foreground w-7 h-7 -ml-1 rounded-lg flex items-center justify-center border border-border/60 hover:border-primary/30 bg-background/20 hover:bg-muted/30 transition-all focus-ring flex-shrink-0"
-              title="Назад к друзьям"
-            >
-              ←
-            </button>
-          )}
           <span className="text-muted-foreground text-sm">🔍</span>
           <input
             ref={inputRef}

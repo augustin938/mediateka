@@ -128,8 +128,33 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
       }
       if (!res.ok) throw new Error();
 
+      const data = await res.json();
+      const createdId = data.item?.id as string | undefined;
       toast.success("Добавлено в твою коллекцию");
       setImportedIds((prev) => new Set(prev).add(item.id));
+
+      if (createdId) {
+        toast("Можно отменить действие", {
+          description: "Элемент добавлен в твою коллекцию",
+          action: {
+            label: "Отменить",
+            onClick: async () => {
+              try {
+                const del = await fetch(`/api/collection/${createdId}`, { method: "DELETE" });
+                if (!del.ok) throw new Error();
+                setImportedIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(item.id);
+                  return next;
+                });
+                toast.success("Отменено");
+              } catch {
+                toast.error("Не удалось отменить");
+              }
+            },
+          },
+        } as any);
+      }
     } catch {
       toast.error("Не удалось добавить в коллекцию");
     } finally {

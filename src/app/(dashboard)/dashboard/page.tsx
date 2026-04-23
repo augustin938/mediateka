@@ -1,4 +1,5 @@
 import SearchSection from "@/components/search/SearchSection";
+import AnimatedHeadline from "@/components/dashboard/AnimatedHeadline";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -18,14 +19,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-10">
-      <div className="space-y-1">
-        <h1 className="font-display text-3xl md:text-4xl font-bold">
-          Привет, {session?.user?.name?.split(" ")[0] ?? "пользователь"} 👋
-        </h1>
-        <p className="text-muted-foreground">
-          Найди что-нибудь интересное для своей коллекции
-        </p>
-      </div>
+      <AnimatedHeadline name={session?.user?.name ?? "пользователь"} />
       <SearchSection key={q ?? ""} initialQuery={q} initialType={type} />
     </div>
   );

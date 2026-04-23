@@ -381,6 +381,19 @@ function GridView({
               <span className="text-sm leading-none">{STATUS_ICON[item.status]}</span>
             </div>
 
+            <button
+              onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
+              className={cn(
+                "absolute top-2 right-2 w-8 h-8 rounded-xl flex items-center justify-center text-xs",
+                "bg-black/60 backdrop-blur-sm border border-white/10 shadow-lg",
+                "text-white/90 hover:text-white hover:bg-black/70 transition-all",
+                "opacity-0 group-hover:opacity-100 focus:opacity-100 focus-ring"
+              )}
+              title="Поделиться"
+            >
+              ➤
+            </button>
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 gap-2">
               <p className="text-white text-[11px] font-bold leading-tight line-clamp-2">{item.mediaItem.title}</p>
               {item.mediaItem.year && <p className="text-white/50 text-[10px]">{item.mediaItem.year}</p>}
@@ -400,13 +413,6 @@ function GridView({
                   className="flex-1 text-[10px] bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg backdrop-blur-sm transition-colors font-semibold focus-ring interactive-soft"
                 >
                   ✏️ Изменить
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
-                  className="text-[10px] bg-black/30 hover:bg-black/40 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft"
-                  title="Поделиться"
-                >
-                  ➤
                 </button>
                 <button
                   onClick={e=>{e.stopPropagation();onRemove(item.id);}}
@@ -675,12 +681,14 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
   );
 }
 
-function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, onReviewChange, onSave, onClose, onToggleTag, onCreateTag, onDeleteTag }: {
+function EditModal({ editStatus, editRating, editReview, allTags, itemTags, onStatusChange, onRatingChange, onReviewChange, onSave, onClose, onToggleTag, onCreateTag, onDeleteTag }: {
   editingId: string;
+  editStatus: CollectionStatus;
   editRating: number|null;
   editReview: string;
   allTags: Tag[];
   itemTags: Tag[];
+  onStatusChange: (s: CollectionStatus)=>void;
   onRatingChange: (r:number)=>void;
   onReviewChange: (r:string)=>void;
   onSave: ()=>void;
@@ -718,6 +726,26 @@ function EditModal({ editRating, editReview, allTags, itemTags, onRatingChange, 
 
         {tab==="main" && (
           <div className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-foreground">Статус</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["WANT","IN_PROGRESS","COMPLETED","DROPPED"] as CollectionStatus[]).map(s=>(
+                  <button
+                    key={s}
+                    onClick={()=>onStatusChange(s)}
+                    className={cn(
+                      "text-xs px-3 py-2.5 rounded-xl border transition-all font-semibold focus-ring",
+                      editStatus===s
+                        ? cn(STATUS_COLORS[s], "ring-2 ring-offset-1 ring-offset-background ring-current/30")
+                        : "border-border/60 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                    )}
+                  >
+                    {STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-foreground">Оценка</label>
@@ -850,6 +878,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const [editingId,    setEditingId]    = useState<string|null>(null);
   const [editRating,   setEditRating]   = useState<number|null>(null);
   const [editReview,   setEditReview]   = useState("");
+  const [editStatus,   setEditStatus]   = useState<CollectionStatus>("WANT");
   const [allTags,      setAllTags]      = useState<Tag[]>([]);
   const [itemTags,     setItemTags]     = useState<Tag[]>([]);
   const [unratedOnly,  setUnratedOnly]  = useState(false);
@@ -998,9 +1027,13 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const saveEdit = async()=>{
     if(!editingId) return;
     try {
-      const res = await fetch(`/api/collection/${editingId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({rating:editRating,review:editReview||null})});
+      const res = await fetch(`/api/collection/${editingId}`,{
+        method:"PATCH",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({status: editStatus, rating:editRating, review:editReview||null})
+      });
       if(!res.ok) throw new Error();
-      setItems(prev=>prev.map(i=>i.id===editingId?{...i,rating:editRating,review:editReview||null}:i));
+      setItems(prev=>prev.map(i=>i.id===editingId?{...i,status: editStatus, rating:editRating,review:editReview||null}:i));
       toast.success("Сохранено");
       setEditingId(null);
     } catch { toast.error("Ошибка сохранения"); }
@@ -1083,7 +1116,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
     }
   };
 
-  const startEdit = (item:CollectionItemWithMedia)=>{ setEditingId(item.id); setEditRating(item.rating??null); setEditReview(item.review??""); setDetailItem(null); };
+  const startEdit = (item:CollectionItemWithMedia)=>{ setEditingId(item.id); setEditStatus(item.status); setEditRating(item.rating??null); setEditReview(item.review??""); setDetailItem(null); };
 
   const handleToggleTag = async(tag:Tag)=>{
     if(!editingId) return;
@@ -1120,6 +1153,11 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
 
   const resetFilters = ()=>{ setStatusFilter("all"); setTypeFilter("all"); setYearFrom(""); setYearTo(""); setGenreFilter(""); setTagFilter(null); setSearchQuery(""); };
   const hasActiveFilters = statusFilter!=="all" || typeFilter!=="all" || unratedOnly || yearFrom || yearTo || genreFilter || tagFilter || searchQuery.trim();
+  const tagNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    allTags.forEach((t) => m.set(t.id, t.name));
+    return m;
+  }, [allTags]);
 
   if(items.length===0) return (
     <div className="text-center py-32 space-y-4">
@@ -1281,6 +1319,58 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           {multiSelectMode ? "Готово" : "Выбрать несколько"}
         </button>
       </div>
+
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 -mt-2">
+          <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide">Активные фильтры</span>
+          {statusFilter !== "all" && (
+            <button onClick={() => setStatusFilter("all")}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring">
+              Статус: {STATUS_LABELS[statusFilter as CollectionStatus]} ✕
+            </button>
+          )}
+          {typeFilter !== "all" && (
+            <button onClick={() => setTypeFilter("all")}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring">
+              Тип: {TYPE_FILTERS.find((t) => t.value === typeFilter)?.label ?? typeFilter} ✕
+            </button>
+          )}
+          {unratedOnly && (
+            <button onClick={() => setUnratedOnly(false)}
+              className="text-xs px-3 py-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15 transition-all focus-ring">
+              Без оценки ✕
+            </button>
+          )}
+          {(yearFrom || yearTo) && (
+            <button onClick={() => { setYearFrom(""); setYearTo(""); }}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring">
+              Год: {yearFrom || "…"}–{yearTo || "…"} ✕
+            </button>
+          )}
+          {genreFilter && (
+            <button onClick={() => setGenreFilter("")}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring">
+              Жанр: {genreFilter} ✕
+            </button>
+          )}
+          {tagFilter && (
+            <button onClick={() => setTagFilter(null)}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring">
+              Тег: {tagNameById.get(tagFilter) ?? "выбран"} ✕
+            </button>
+          )}
+          {searchQuery.trim() && (
+            <button onClick={() => setSearchQuery("")}
+              className="text-xs px-3 py-1.5 rounded-full border border-border/60 bg-card/30 hover:bg-muted/40 transition-all focus-ring max-w-full">
+              <span className="truncate inline-block max-w-[240px] align-bottom">Поиск: {searchQuery}</span> ✕
+            </button>
+          )}
+          <button onClick={resetFilters}
+            className="text-xs px-3 py-1.5 rounded-full border border-red-500/25 bg-red-500/10 text-red-300 hover:bg-red-500/15 transition-all focus-ring">
+            Сбросить всё
+          </button>
+        </div>
+      )}
 
       {multiSelectMode && (
         <div className="glass rounded-2xl p-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -1557,8 +1647,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         <DetailModal item={detailItem} onClose={()=>setDetailItem(null)} onEdit={startEdit} onRemove={removeItem} onStatusChange={updateStatus}/>
       )}
       {editingId && (
-        <EditModal editingId={editingId} editRating={editRating} editReview={editReview} allTags={allTags} itemTags={itemTags}
-          onRatingChange={setEditRating} onReviewChange={setEditReview} onSave={saveEdit} onClose={()=>setEditingId(null)}
+        <EditModal editingId={editingId} editStatus={editStatus} editRating={editRating} editReview={editReview} allTags={allTags} itemTags={itemTags}
+          onStatusChange={setEditStatus} onRatingChange={setEditRating} onReviewChange={setEditReview} onSave={saveEdit} onClose={()=>setEditingId(null)}
           onToggleTag={handleToggleTag} onCreateTag={handleCreateTag} onDeleteTag={deleteTag}/>
       )}
     </div>
