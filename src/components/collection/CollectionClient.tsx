@@ -381,19 +381,6 @@ function GridView({
               <span className="text-sm leading-none">{STATUS_ICON[item.status]}</span>
             </div>
 
-            <button
-              onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
-              className={cn(
-                "absolute top-2 right-2 w-8 h-8 rounded-xl flex items-center justify-center text-xs",
-                "bg-black/60 backdrop-blur-sm border border-white/10 shadow-lg",
-                "text-white/90 hover:text-white hover:bg-black/70 transition-all",
-                "opacity-0 group-hover:opacity-100 focus:opacity-100 focus-ring"
-              )}
-              title="Поделиться"
-            >
-              ➤
-            </button>
-
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 gap-2">
               <p className="text-white text-[11px] font-bold leading-tight line-clamp-2">{item.mediaItem.title}</p>
               {item.mediaItem.year && <p className="text-white/50 text-[10px]">{item.mediaItem.year}</p>}
@@ -413,6 +400,15 @@ function GridView({
                   className="flex-1 text-[10px] bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg backdrop-blur-sm transition-colors font-semibold focus-ring interactive-soft"
                 >
                   ✏️ Изменить
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
+                  className="text-[10px] bg-black/30 hover:bg-black/40 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft"
+                  title="Поделиться"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17l10-10M7 7h10v10" />
+                  </svg>
                 </button>
                 <button
                   onClick={e=>{e.stopPropagation();onRemove(item.id);}}
@@ -555,7 +551,9 @@ function ListView({
                 onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
                 className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
                 title="Поделиться">
-                ➤
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17l10-10M7 7h10v10" />
+                </svg>
               </button>
               <button
                 onClick={e=>{e.stopPropagation();onRemove(item.id);}}

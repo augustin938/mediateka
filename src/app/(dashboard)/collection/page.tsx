@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { collectionItems, mediaItems, collectionItemTags, tags } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import CollectionClient from "@/components/collection/CollectionClient";
+import NeonSectionHeader from "@/components/layout/NeonSectionHeader";
 import type { CollectionItemWithMedia } from "@/types";
 
 import type { Metadata } from "next";
@@ -47,12 +48,11 @@ export default async function CollectionPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Моя коллекция</h1>
-        <p className="text-muted-foreground mt-1">
-          {collection.length} {collection.length === 1 ? "элемент" : "элементов"}
-        </p>
-      </div>
+      <NeonSectionHeader
+        title="Моя коллекция"
+        subtitle="Твой личный архив вкуса — собирай, оценивай, сортируй"
+        badge={`${collection.length}`}
+      />
       <CollectionClient initialItems={collection} />
     </div>
   );

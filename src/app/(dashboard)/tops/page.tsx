@@ -1,4 +1,5 @@
 import TopsClient from "@/components/tops/TopsClient";
+import NeonSectionHeader from "@/components/layout/NeonSectionHeader";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -15,10 +16,11 @@ export default async function TopsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Топы 🏆</h1>
-        <p className="text-muted-foreground mt-1">Лучшие фильмы, сериалы, игры и книги в мире</p>
-      </div>
+      <NeonSectionHeader
+        title="Топы"
+        subtitle="Лучшие фильмы, сериалы, игры и книги в мире"
+        badge="🏆"
+      />
       <TopsClient />
     </div>
   );

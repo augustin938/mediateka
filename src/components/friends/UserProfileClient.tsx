@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -46,9 +46,24 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [importingId, setImportingId] = useState<string | null>(null);
   const [importedIds, setImportedIds] = useState<Set<string>>(() => new Set());
+  const [ownedMediaItemIds, setOwnedMediaItemIds] = useState<Set<string>>(() => new Set());
   const [achOpen, setAchOpen] = useState(false);
   const [achLoading, setAchLoading] = useState(false);
   const [achStats, setAchStats] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!isFriend) return;
+    const mediaItemIds = Array.from(new Set(collection.map((i) => i.mediaItem?.id).filter(Boolean)));
+    if (mediaItemIds.length === 0) return;
+    fetch("/api/collection/contains", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mediaItemIds }),
+    })
+      .then((r) => r.json())
+      .then((d) => setOwnedMediaItemIds(new Set(d.ownedMediaItemIds ?? [])))
+      .catch(() => {});
+  }, [isFriend, collection]);
 
   const sendRequest = async () => {
     const res = await fetch("/api/friends", {
@@ -166,6 +181,8 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
     // на клиенте нет знания о твоей коллекции, поэтому считаем "импортировано" только в рамках текущей сессии
     return importedIds;
   }, [importedIds]);
+
+  const owned = useMemo(() => ownedMediaItemIds, [ownedMediaItemIds]);
 
   const openAchievements = async () => {
     if (!isFriend) return;
@@ -325,16 +342,22 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
                   <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
                     <button
                       onClick={() => importToMyCollection(item)}
-                      disabled={importingId === item.id || filteredImported.has(item.id)}
+                      disabled={importingId === item.id || filteredImported.has(item.id) || owned.has(item.mediaItem.id)}
                       className={cn(
                         "w-full text-xs font-semibold px-3 py-2 rounded-xl transition-all border focus-ring",
-                        filteredImported.has(item.id)
+                        filteredImported.has(item.id) || owned.has(item.mediaItem.id)
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                           : "bg-primary/25 hover:bg-primary/35 text-white border-white/10"
                       )}
                       title="Добавить к себе в коллекцию"
                     >
-                      {filteredImported.has(item.id) ? "✓ Уже добавлено" : importingId === item.id ? "Добавляю..." : "+ В мою коллекцию"}
+                      {owned.has(item.mediaItem.id)
+                        ? "✓ Уже в твоей коллекции"
+                        : filteredImported.has(item.id)
+                          ? "✓ Уже добавлено"
+                          : importingId === item.id
+                            ? "Добавляю..."
+                            : "+ В мою коллекцию"}
                     </button>
                   </div>
                 </div>

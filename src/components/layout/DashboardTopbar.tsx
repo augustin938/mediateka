@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS } from "@/types";
@@ -40,6 +40,21 @@ const PAGE_TITLES: Record<string, string> = {
   "/activity":        "История",
   "/profile":         "Профиль",
 };
+
+function useTypewriter(text: string, speedMs = 26) {
+  const [out, setOut] = useState("");
+  useEffect(() => {
+    let i = 0;
+    setOut("");
+    const id = window.setInterval(() => {
+      i += 1;
+      setOut(text.slice(0, i));
+      if (i >= text.length) window.clearInterval(id);
+    }, speedMs);
+    return () => window.clearInterval(id);
+  }, [text, speedMs]);
+  return out;
+}
 
 const THEMES = [
   {
@@ -243,6 +258,17 @@ export default function DashboardTopbar() {
   const pageTitle = PAGE_TITLES[pathname] ?? "";
   const isFriendProfile = pathname.startsWith("/user/");
 
+  const typedTitle = useTypewriter(pageTitle || "Медиатека", 24);
+  const showNeonTitle = Boolean(pageTitle);
+  const titleLabel = typedTitle || pageTitle || "Медиатека";
+
+  const titleGlow = useMemo(() => {
+    // лёгкий киберпанк-акцент, без перебора
+    const base = "bg-gradient-to-r from-foreground via-primary to-cyan-200 bg-clip-text text-transparent";
+    if (!showNeonTitle) return "text-foreground/80";
+    return base;
+  }, [showNeonTitle]);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
@@ -317,7 +343,13 @@ export default function DashboardTopbar() {
             ←
           </button>
         )}
-        <h2 className="font-display font-semibold text-foreground/80 text-sm">{pageTitle}</h2>
+        <div className="relative">
+          <h2 className={cn("font-display font-black text-sm tracking-tight leading-none", titleGlow)}>
+            {titleLabel}
+            <span className="inline-block w-[1ch] text-primary/40 animate-pulse">▍</span>
+          </h2>
+          <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-60" />
+        </div>
       </div>
 
       <div ref={searchRef} className="flex-1 max-w-lg mx-auto relative">

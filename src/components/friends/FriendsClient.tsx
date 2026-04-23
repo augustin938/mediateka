@@ -66,6 +66,7 @@ function ChatDrawer({
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [ownedShareKeys, setOwnedShareKeys] = useState<Set<string>>(() => new Set());
   const esRef = useRef<EventSource | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -87,6 +88,24 @@ function ChatDrawer({
       setConversationId(data.conversation?.id ?? null);
       const rows: ChatMessage[] = (data.messages ?? []).slice().reverse();
       setMessages(rows);
+
+      // Mark shared items that are already in my collection.
+      const shares = rows
+        .filter((m) => m.type === "share" && m.sharedTitle && m.sharedType)
+        .map((m) => ({ type: m.sharedType!, title: m.sharedTitle!, year: m.sharedYear ?? null }));
+      if (shares.length > 0) {
+        fetch("/api/collection/contains", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shares }),
+        })
+          .then((r) => r.json())
+          .then((d) => setOwnedShareKeys(new Set(d.ownedShareKeys ?? [])))
+          .catch(() => {});
+      } else {
+        setOwnedShareKeys(new Set());
+      }
+
       setTimeout(scrollToBottom, 50);
     } catch {
       setMessages([]);
@@ -167,6 +186,10 @@ function ChatDrawer({
 
   const addSharedToCollection = async (m: ChatMessage) => {
     if (m.type !== "share" || !m.sharedTitle || !m.sharedType) return;
+    if (ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)) {
+      toast.info("Уже есть в коллекции");
+      return;
+    }
     const mediaItemId = `chat_${m.sharedType}_${m.sharedTitle.replace(/[^a-zA-Zа-яА-Я0-9]/g, "_").toLowerCase().slice(0, 40)}`;
     try {
       const res = await fetch("/api/collection", {
@@ -191,7 +214,10 @@ function ChatDrawer({
         }),
       });
       if (res.status === 409) toast.info("Уже есть в коллекции");
-      else if (res.ok) toast.success("Добавлено в коллекцию");
+      else if (res.ok) {
+        toast.success("Добавлено в коллекцию");
+        setOwnedShareKeys((prev) => new Set(prev).add(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`));
+      }
       else toast.error("Не удалось добавить");
     } catch {
       toast.error("Не удалось добавить");
@@ -263,11 +289,19 @@ function ChatDrawer({
                             {(m.sharedType ?? "").toString()} {m.sharedYear ?? ""}
                           </p>
                         </div>
+                        {(ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)) && (
+                          <span className="text-[10px] px-2 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 whitespace-nowrap">
+                            ✓ Уже в коллекции
+                          </span>
+                        )}
                         <button
                           onClick={() => addSharedToCollection(m)}
-                          className="text-[11px] px-2 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary opacity-0 group-hover/share:opacity-100 transition-opacity whitespace-nowrap"
+                          disabled={ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)}
+                          className="text-[11px] px-2 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary opacity-0 group-hover/share:opacity-100 transition-opacity whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          + В коллекцию
+                          {ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)
+                            ? "Уже добавлено"
+                            : "+ В коллекцию"}
                         </button>
                       </div>
                     </div>
