@@ -320,12 +320,14 @@ function GridView({
   selectedIds,
   onToggleSelect,
   selectionMode,
+  multiSelectMode,
   onClickItem,
   onShare,
 }: ViewProps & {
   selectedIds: string[];
   onToggleSelect: (id: string, e?: React.MouseEvent) => void;
   selectionMode: boolean;
+  multiSelectMode: boolean;
   onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
   onShare: (id: string) => void;
 }) {
@@ -341,18 +343,20 @@ function GridView({
           )}
           onClick={(e)=>onClickItem(item, e)}>
 
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
-            className={cn(
-              "absolute top-2 left-2 z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm",
-              "bg-black/50 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg",
-              "transition-all hover:bg-black/60 focus-ring",
-              selectedIds.includes(item.id) && "bg-primary/60 border-primary/40"
-            )}
-            title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
-          >
-            {selectedIds.includes(item.id) ? "✓" : "◻"}
-          </button>
+          {multiSelectMode && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
+              className={cn(
+                "absolute top-2 left-2 z-10 w-8 h-8 rounded-xl flex items-center justify-center text-sm",
+                "bg-black/50 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg",
+                "transition-all hover:bg-black/60 focus-ring",
+                selectedIds.includes(item.id) && "bg-primary/60 border-primary/40"
+              )}
+              title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
+            >
+              {selectedIds.includes(item.id) ? "✓" : "◻"}
+            </button>
+          )}
 
           <div className="aspect-[2/3] bg-muted/30 relative overflow-hidden">
             {item.mediaItem.posterUrl
@@ -402,12 +406,13 @@ function GridView({
                   className="text-[10px] bg-black/30 hover:bg-black/40 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft"
                   title="Поделиться"
                 >
-                  💬
+                  ➤
                 </button>
                 <button
                   onClick={e=>{e.stopPropagation();onRemove(item.id);}}
-                  className="text-[10px] bg-red-500/40 hover:bg-red-500/60 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft">
-                  🗑
+                  className="text-[10px] bg-red-500/40 hover:bg-red-500/60 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft flex items-center gap-1">
+                  <span>🗑</span>
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-16 transition-all duration-200">Удалить</span>
                 </button>
               </div>
             </div>
@@ -443,12 +448,14 @@ function ListView({
   selectedIds,
   onToggleSelect,
   selectionMode,
+  multiSelectMode,
   onClickItem,
   onShare,
 }: ViewProps & {
   selectedIds: string[];
   onToggleSelect: (id: string, e?: React.MouseEvent) => void;
   selectionMode: boolean;
+  multiSelectMode: boolean;
   onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
   onShare: (id: string) => void;
 }) {
@@ -462,18 +469,20 @@ function ListView({
           <div className={cn("absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl", STATUS_BAR_COLORS[item.status])}/>
 
           <div className="flex items-center gap-3 p-3 pl-4">
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
-              className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0",
-                "bg-muted/30 border border-border/70 hover:border-primary/30 hover:bg-muted/50 transition-all",
-                "focus-ring",
-                selectedIds.includes(item.id) && "bg-primary/15 border-primary/30 text-primary"
-              )}
-              title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
-            >
-              {selectedIds.includes(item.id) ? "✓" : "◻"}
-            </button>
+            {multiSelectMode && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id, e); }}
+                className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0",
+                  "bg-muted/30 border border-border/70 hover:border-primary/30 hover:bg-muted/50 transition-all",
+                  "focus-ring",
+                  selectedIds.includes(item.id) && "bg-primary/15 border-primary/30 text-primary"
+                )}
+                title={selectedIds.includes(item.id) ? "Снять выделение" : "Выбрать"}
+              >
+                {selectedIds.includes(item.id) ? "✓" : "◻"}
+              </button>
+            )}
             <span className="text-xs text-muted-foreground/40 font-mono w-5 text-right flex-shrink-0 select-none">
               {idx+1}
             </span>
@@ -540,15 +549,16 @@ function ListView({
                 onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
                 className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
                 title="Поделиться">
-                💬
+                ➤
               </button>
               <button
                 onClick={e=>{e.stopPropagation();onRemove(item.id);}}
-                className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors flex items-center gap-1"
                 title="Удалить">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
+                <span className="text-xs max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-16 transition-all duration-200">Удалить</span>
               </button>
             </div>
           </div>
@@ -844,10 +854,11 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const [itemTags,     setItemTags]     = useState<Tag[]>([]);
   const [unratedOnly,  setUnratedOnly]  = useState(false);
   const [selectedIds,  setSelectedIds]  = useState<string[]>([]);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [bulkStatus,   setBulkStatus]   = useState<CollectionStatus>("WANT");
   const deleteOpRef = useRef<{ id: string; cancelled: boolean } | null>(null);
   const lastSelectedIdRef = useRef<string | null>(null);
-  const selectionMode = selectedIds.length > 0;
+  const selectionMode = multiSelectMode;
   const [shareItemId, setShareItemId] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -1207,9 +1218,25 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         >
           ⭐ Не оценено
         </button>
+        <button
+          onClick={() => {
+            setMultiSelectMode((prev) => {
+              if (prev) setSelectedIds([]);
+              return !prev;
+            });
+          }}
+          className={cn(
+            "text-sm px-3.5 py-1.5 rounded-xl border transition-all duration-200 font-medium",
+            multiSelectMode
+              ? "bg-primary/20 text-primary border-primary/30"
+              : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+          )}
+        >
+          {multiSelectMode ? "Готово" : "Выбрать несколько"}
+        </button>
       </div>
 
-      {selectedIds.length > 0 && (
+      {multiSelectMode && (
         <div className="glass rounded-2xl p-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-foreground">Выбрано: {selectedIds.length}</span>
@@ -1245,12 +1272,14 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
             </select>
             <button
               onClick={() => updateStatusBulk(selectedIds, bulkStatus)}
+              disabled={selectedIds.length === 0}
               className="text-xs px-3 py-2 rounded-lg bg-primary/15 text-primary border border-primary/25 hover:bg-primary/20 transition-all focus-ring interactive-soft"
             >
               Применить статус
             </button>
             <button
               onClick={() => removeItemsWithUndo(selectedIds)}
+              disabled={selectedIds.length === 0}
               className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-300 border border-red-500/25 hover:bg-red-500/15 transition-all focus-ring interactive-soft"
             >
               Удалить
@@ -1282,10 +1311,22 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
 
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}
-            className="text-xs bg-background border border-border rounded-lg px-3 py-2 focus:outline-none text-foreground cursor-pointer">
-            {TYPE_FILTERS.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+          <div className="flex items-center gap-1 p-0.5 rounded-lg border border-border bg-background/50">
+            {TYPE_FILTERS.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setTypeFilter(type.value)}
+                className={cn(
+                  "text-xs px-2.5 py-1.5 rounded-md border transition-all duration-200 font-medium",
+                  typeFilter === type.value
+                    ? "bg-primary/20 text-primary border-primary/30"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
           <select value={sortBy} onChange={e=>setSortBy(e.target.value as typeof sortBy)}
             className="text-xs bg-background border border-border rounded-lg px-3 py-2 focus:outline-none text-foreground cursor-pointer">
             {SORT_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
@@ -1420,8 +1461,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
-                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
+                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1452,8 +1493,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
-                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
+                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1483,8 +1524,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
-                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
+                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1503,8 +1544,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           };
           return (
         viewMode==="grid"
-          ? <GridView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
-          : <ListView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
+          ? <GridView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>
+          : <ListView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} multiSelectMode={multiSelectMode} onClickItem={onClickItem} onShare={openShare}/>
           );
         })()
       )}

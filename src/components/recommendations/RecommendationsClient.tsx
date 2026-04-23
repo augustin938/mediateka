@@ -414,7 +414,6 @@ function HeroCarousel({
 
 export default function RecommendationsClient() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [crossRecs, setCrossRecs] = useState<Recommendation[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
   const [empty, setEmpty] = useState(false);
@@ -426,7 +425,6 @@ export default function RecommendationsClient() {
   const load = useCallback(() => {
     setLoading(true);
     setRecs([]);
-    setCrossRecs([]);
     Promise.all([
       fetch(`/api/recommendations?seed=${seed}`).then((r) => r.json()),
       fetch("/api/collection").then((r) => r.json()),
@@ -448,11 +446,6 @@ export default function RecommendationsClient() {
       });
       setRecs(filtered);
 
-      const crossFiltered = (recsData.crossRecommendations ?? []).filter((r: Recommendation) => {
-        const key = `${r.type}_${r.title.toLowerCase().trim()}`;
-        return !inCollection.has(key);
-      });
-      setCrossRecs(crossFiltered);
     }).finally(() => setLoading(false));
   }, [seed]);
 
@@ -630,11 +623,6 @@ export default function RecommendationsClient() {
         }
 
         <div className="space-y-10">
-          {typeFilter === "all" && crossRecs.length > 0 && (
-            <div className="rounded-2xl p-5 bg-gradient-to-br border border-border/50 from-fuchsia-500/15 to-violet-500/5">
-              <RecRow title="Кросс-рекомендации" icon="✨" items={crossRecs} onOpenModal={setModalRec} />
-            </div>
-          )}
           {(typeFilter === "all" || typeFilter === "movie") && movies.length > 0 && (
             <div className={cn("rounded-2xl p-5 bg-gradient-to-br border border-border/50", TYPE_SECTION_COLORS.movie)}>
               <RecRow title="Фильмы для тебя" icon="🎬" items={movies} onOpenModal={setModalRec} />

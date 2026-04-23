@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface FriendUser {
@@ -22,7 +23,6 @@ interface FriendEntry {
   other: FriendUser;
 }
 
-type ChatReaction = { emoji: string; count: number; mine: boolean };
 type ChatMessage = {
   id: string;
   conversationId: string;
@@ -36,10 +36,7 @@ type ChatMessage = {
   createdAt: string;
   deletedAt: string | null;
   deleted: boolean;
-  reactions: ChatReaction[];
 };
-
-const QUICK_REACTIONS = ["❤️", "🔥", "😂", "👍", "😮", "😢"] as const;
 
 function Avatar({ image, name, size = 40 }: { image?: string | null; name: string; size?: number }) {
   const initials = name?.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
@@ -70,6 +67,7 @@ function ChatDrawer({
   const [text, setText] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
+  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const friendId = friend?.id ?? null;
@@ -102,39 +100,12 @@ function ChatDrawer({
       const msg = payload.message as ChatMessage;
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, { ...msg, deleted: Boolean((msg as any).deletedAt), reactions: [] }];
+        return [...prev, { ...msg, deleted: Boolean((msg as any).deletedAt) }];
       });
       setTimeout(scrollToBottom, 50);
     }
     if (payload?.type === "message:deleted" && payload.messageId) {
       setMessages((prev) => prev.map((m) => m.id === payload.messageId ? { ...m, deleted: true, deletedAt: payload.deletedAt ?? new Date().toISOString(), text: null, sharedTitle: null, sharedType: null, sharedYear: null, sharedPosterUrl: null } : m));
-    }
-    if (payload?.type === "reaction:added" && payload.messageId && payload.emoji) {
-      setMessages((prev) => prev.map((m) => {
-        if (m.id !== payload.messageId) return m;
-        const list = m.reactions ?? [];
-        const idx = list.findIndex((r) => r.emoji === payload.emoji);
-        if (idx === -1) return { ...m, reactions: [...list, { emoji: payload.emoji, count: 1, mine: payload.userId === meId }] };
-        const r = list[idx];
-        const next = [...list];
-        next[idx] = { emoji: r.emoji, count: r.count + 1, mine: r.mine || payload.userId === meId };
-        return { ...m, reactions: next };
-      }));
-    }
-    if (payload?.type === "reaction:removed" && payload.messageId && payload.emoji) {
-      setMessages((prev) => prev.map((m) => {
-        if (m.id !== payload.messageId) return m;
-        const list = m.reactions ?? [];
-        const idx = list.findIndex((r) => r.emoji === payload.emoji);
-        if (idx === -1) return m;
-        const r = list[idx];
-        const next = [...list];
-        const mine = r.mine && payload.userId !== meId ? true : false;
-        const count = Math.max(0, r.count - 1);
-        if (count === 0) next.splice(idx, 1);
-        else next[idx] = { emoji: r.emoji, count, mine };
-        return { ...m, reactions: next };
-      }));
     }
   };
 
@@ -145,13 +116,28 @@ function ChatDrawer({
 
   useEffect(() => {
     if (!open || !friendId) return;
-    esRef.current?.close();
-    const es = new EventSource(`/api/chat/stream?with=${encodeURIComponent(friendId)}`);
-    es.addEventListener("chat", (e: MessageEvent) => {
-      try { applyEvent(JSON.parse(e.data)); } catch {}
-    });
-    esRef.current = es;
-    return () => { es.close(); esRef.current = null; };
+    let active = true;
+    const connect = () => {
+      esRef.current?.close();
+      const es = new EventSource(`/api/chat/stream?with=${encodeURIComponent(friendId)}`);
+      es.addEventListener("chat", (e: MessageEvent) => {
+        try { applyEvent(JSON.parse(e.data)); } catch {}
+      });
+      es.onerror = () => {
+        es.close();
+        if (!active) return;
+        reconnectRef.current = setTimeout(connect, 1000);
+      };
+      esRef.current = es;
+    };
+    connect();
+    return () => {
+      active = false;
+      esRef.current?.close();
+      esRef.current = null;
+      if (reconnectRef.current) clearTimeout(reconnectRef.current);
+      reconnectRef.current = null;
+    };
   }, [open, friendId]);
 
   const send = async () => {
@@ -160,24 +146,56 @@ function ChatDrawer({
     if (t.length < 1) return;
     setText("");
     try {
-      await fetch("/api/chat/messages", {
+      const res = await fetch("/api/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toUserId: friendId, text: t }),
       });
+      const data = await res.json();
+      if (res.ok && data.message) {
+        const msg = data.message as ChatMessage;
+        setConversationId(data.conversation?.id ?? conversationId);
+        setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, { ...msg, deleted: Boolean((msg as any).deletedAt) }]));
+        setTimeout(scrollToBottom, 30);
+      } else {
+        toast.error("Не удалось отправить");
+      }
     } catch {
       toast.error("Не удалось отправить");
     }
   };
 
-  const toggleReaction = async (messageId: string, emoji: string) => {
+  const addSharedToCollection = async (m: ChatMessage) => {
+    if (m.type !== "share" || !m.sharedTitle || !m.sharedType) return;
+    const mediaItemId = `chat_${m.sharedType}_${m.sharedTitle.replace(/[^a-zA-Zа-яА-Я0-9]/g, "_").toLowerCase().slice(0, 40)}`;
     try {
-      await fetch(`/api/chat/messages/${messageId}/reactions`, {
+      const res = await fetch("/api/collection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emoji }),
+        body: JSON.stringify({
+          mediaItemId,
+          status: "WANT",
+          externalId: mediaItemId,
+          type: m.sharedType,
+          title: m.sharedTitle,
+          posterUrl: m.sharedPosterUrl ?? null,
+          year: m.sharedYear ?? null,
+          genres: [],
+          externalUrl: null,
+          description: null,
+          originalTitle: null,
+          externalRating: null,
+          director: null,
+          author: null,
+          developer: null,
+        }),
       });
-    } catch {}
+      if (res.status === 409) toast.info("Уже есть в коллекции");
+      else if (res.ok) toast.success("Добавлено в коллекцию");
+      else toast.error("Не удалось добавить");
+    } catch {
+      toast.error("Не удалось добавить");
+    }
   };
 
   const deleteMessage = async (messageId: string) => {
@@ -232,7 +250,7 @@ function ChatDrawer({
                   ) : m.type === "share" ? (
                     <div className="space-y-2">
                       <p className="text-xs text-muted-foreground">📎 Поделился из коллекции</p>
-                      <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background/40 p-2">
+                      <div className="group/share flex items-center gap-3 rounded-xl border border-border/70 bg-background/40 p-2">
                         <div className="w-10 h-14 rounded-lg overflow-hidden bg-muted/40 flex items-center justify-center flex-shrink-0">
                           {m.sharedPosterUrl
                             // eslint-disable-next-line @next/next/no-img-element
@@ -245,50 +263,29 @@ function ChatDrawer({
                             {(m.sharedType ?? "").toString()} {m.sharedYear ?? ""}
                           </p>
                         </div>
+                        <button
+                          onClick={() => addSharedToCollection(m)}
+                          className="text-[11px] px-2 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary opacity-0 group-hover/share:opacity-100 transition-opacity whitespace-nowrap"
+                        >
+                          + В коллекцию
+                        </button>
                       </div>
                     </div>
                   ) : (
                     <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.text}</p>
                   )}
 
-                  <div className="mt-2 flex items-center gap-2 justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {(m.reactions ?? []).map((r) => (
-                        <button
-                          key={r.emoji}
-                          onClick={() => toggleReaction(m.id, r.emoji)}
-                          className={cn(
-                            "text-xs px-2 py-0.5 rounded-full border transition-all",
-                            r.mine ? "border-primary/30 bg-primary/10 text-foreground" : "border-border/70 bg-background/30 text-muted-foreground hover:text-foreground"
-                          )}
-                        >
-                          {r.emoji} {r.count}
-                        </button>
-                      ))}
+                  {mine && !m.deleted && (
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        onClick={() => deleteMessage(m.id)}
+                        className="text-xs px-2 py-1 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors focus-ring"
+                        title="Удалить у всех"
+                      >
+                        🗑 Удалить
+                      </button>
                     </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {QUICK_REACTIONS.map((e) => (
-                        <button
-                          key={e}
-                          onClick={() => toggleReaction(m.id, e)}
-                          className="text-xs px-1.5 py-1 rounded-lg hover:bg-muted/40 transition-colors focus-ring"
-                          title="Реакция"
-                        >
-                          {e}
-                        </button>
-                      ))}
-                      {mine && !m.deleted && (
-                        <button
-                          onClick={() => deleteMessage(m.id)}
-                          className="text-xs px-2 py-1 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors focus-ring"
-                          title="Удалить у всех"
-                        >
-                          🗑
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             );
@@ -334,6 +331,7 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
   const [activeTab, setActiveTab] = useState<"friends" | "search" | "requests">("friends");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatFriend, setChatFriend] = useState<FriendUser | null>(null);
+  const searchParams = useSearchParams();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -348,6 +346,15 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const chatId = searchParams.get("chat");
+    if (!chatId || friends.length === 0) return;
+    const target = friends.find((f) => f.other.id === chatId);
+    if (!target) return;
+    setChatFriend(target.other);
+    setChatOpen(true);
+  }, [friends, searchParams]);
 
   useEffect(() => {
     if (searchQuery.length < 2) { setSearchResults([]); return; }
@@ -453,17 +460,14 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
                 <Link href={`/user/${f.other.id}`} className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-transparent hover:ring-primary/30 transition-all">
                   <Avatar image={f.other.image} name={f.other.name} />
                 </Link>
-                <div className="flex-1 min-w-0">
-                  <Link href={`/user/${f.other.id}`} className="font-semibold text-foreground hover:text-primary transition-colors">
+                <Link href={`/user/${f.other.id}`} className="flex-1 min-w-0 block rounded-lg px-1 py-0.5 hover:bg-muted/30 transition-colors">
+                  <p className="font-semibold text-foreground hover:text-primary transition-colors">
                     {f.other.name}
-                  </Link>
+                  </p>
                   <p className="text-xs text-muted-foreground">{f.other.email}</p>
-                </div>
+                  <p className="text-[11px] text-primary/70 mt-1">Открыть коллекцию →</p>
+                </Link>
                 <div className="flex items-center gap-2">
-                  <Link href={`/user/${f.other.id}`}
-                    className="text-xs bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-3 py-1.5 rounded-lg transition-colors">
-                    Коллекция →
-                  </Link>
                   <button
                     onClick={() => { setChatFriend(f.other); setChatOpen(true); }}
                     className="text-xs bg-card/30 hover:bg-muted/40 text-foreground border border-border/70 hover:border-primary/30 px-3 py-1.5 rounded-lg transition-all"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS, STATUS_LABELS, STATUS_COLORS } from "@/types";
@@ -77,6 +78,17 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
   const isAccepted = friendshipStatus === "accepted";
   const iRequested = currentFriendship?.requesterId === currentUserId;
 
+  const removeFriend = async () => {
+    if (!currentFriendship?.id) return;
+    const res = await fetch(`/api/friends/${currentFriendship.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setCurrentFriendship(null);
+      toast.success("Друг удалён");
+    } else {
+      toast.error("Не удалось удалить из друзей");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile header */}
@@ -103,9 +115,27 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
         </div>
         <div className="flex-shrink-0">
           {isAccepted ? (
-            <span className="text-sm text-emerald-400 border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 rounded-xl">
-              ✓ Друг
-            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/friends?chat=${profileUser.id}`}
+                className="text-sm bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl transition-colors"
+              >
+                💬 Чат
+              </Link>
+              <details className="relative group">
+                <summary className="list-none cursor-pointer text-sm text-emerald-400 border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 rounded-xl select-none">
+                  ✓ Друг
+                </summary>
+                <div className="absolute right-0 mt-2 min-w-[180px] rounded-xl border border-border/70 bg-card/95 backdrop-blur-sm shadow-xl p-1 z-10">
+                  <button
+                    onClick={removeFriend}
+                    className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors"
+                  >
+                    Удалить из друзей
+                  </button>
+                </div>
+              </details>
+            </div>
           ) : isPending && iRequested ? (
             <span className="text-sm text-amber-400 border border-amber-400/30 bg-amber-400/10 px-4 py-2 rounded-xl">
               ⏳ Заявка отправлена
