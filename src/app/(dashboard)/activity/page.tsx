@@ -1,4 +1,5 @@
 import ActivityClient from "@/components/activity/ActivityClient";
+import NeonSectionHeader from "@/components/layout/NeonSectionHeader";
 
 import type { Metadata } from "next";
 
@@ -9,10 +10,10 @@ export const metadata: Metadata = {
 export default function ActivityPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">История активности</h1>
-        <p className="text-muted-foreground mt-1">Всё что происходило с твоей коллекцией</p>
-      </div>
+      <NeonSectionHeader
+        title="История активности"
+        subtitle="Всё что происходило с твоей коллекцией"
+      />
       <ActivityClient />
     </div>
   );

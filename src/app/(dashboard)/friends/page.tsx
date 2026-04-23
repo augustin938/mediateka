@@ -1,4 +1,5 @@
 import FriendsClient from "@/components/friends/FriendsClient";
+import NeonSectionHeader from "@/components/layout/NeonSectionHeader";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -14,10 +15,10 @@ export default async function FriendsPage() {
   if (!session?.user) redirect("/login");
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Друзья</h1>
-        <p className="text-muted-foreground mt-1">Смотри коллекции друзей и делись своей</p>
-      </div>
+      <NeonSectionHeader
+        title="Друзья"
+        subtitle="Смотри коллекции друзей и делись своей"
+      />
       <FriendsClient currentUserId={session.user.id} />
     </div>
   );

@@ -1,4 +1,5 @@
 import AchievementsClient from "@/components/achievements/AchievementsClient";
+import NeonSectionHeader from "@/components/layout/NeonSectionHeader";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
@@ -49,10 +50,10 @@ export default async function AchievementsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Достижения</h1>
-        <p className="text-muted-foreground mt-1">Награды за активность в коллекции</p>
-      </div>
+      <NeonSectionHeader
+        title="Достижения"
+        subtitle="Награды за активность в коллекции"
+      />
       <AchievementsClient stats={stats} />
     </div>
   );
