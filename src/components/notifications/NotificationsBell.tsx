@@ -19,6 +19,7 @@ const TYPE_ICONS: Record<string, string> = {
   friend_request: "👋",
   friend_accepted: "🤝",
   achievement: "🏆",
+  message: "💬",
 };
 
 export default function NotificationsBell() {

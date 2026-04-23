@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { chatConversations, chatMessages, chatMessageReactions, collectionItems, mediaItems } from "@/lib/db/schema";
+import { chatConversations, chatMessages, chatMessageReactions, collectionItems, mediaItems, notifications, users } from "@/lib/db/schema";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { assertFriends, getOrCreateConversation, normalizePair } from "@/lib/chat/server";
 import { publishConversationEvent } from "@/lib/chat/pubsub";
@@ -94,6 +94,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not friends" }, { status: 403 });
   }
 
+  const [sender] = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(eq(users.id, session.user.id));
+
   const conversation = await getOrCreateConversation(session.user.id, toUserId);
 
   let values: any = {
@@ -141,6 +146,28 @@ export async function POST(req: NextRequest) {
     .update(chatConversations)
     .set({ updatedAt: new Date(), lastMessageAt: created.createdAt })
     .where(eq(chatConversations.id, conversation.id));
+
+  // Notification for receiver.
+  try {
+    const isShare = Boolean(collectionItemId);
+    const senderName = sender?.name ?? "Друг";
+    const title = `Новое сообщение от ${senderName}`;
+    const bodyText = isShare
+      ? `Поделился: ${created.sharedTitle ?? "элементом из коллекции"}`
+      : (text.length > 120 ? `${text.slice(0, 120)}…` : text);
+
+    await db.insert(notifications).values({
+      userId: toUserId,
+      type: "message",
+      title,
+      body: bodyText || "Новое сообщение",
+      read: false,
+      link: `/friends?chat=${session.user.id}`,
+      createdAt: new Date(),
+    });
+  } catch {
+    // ignore notification errors
+  }
 
   publishConversationEvent(conversation.id, { type: "message:new", message: created });
 

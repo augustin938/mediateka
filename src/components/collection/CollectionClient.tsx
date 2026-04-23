@@ -1190,34 +1190,80 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {STATUS_FILTERS.map(status=>(
-          <button key={status} onClick={()=>setStatusFilter(status)}
+      <div className="glass rounded-2xl p-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Статус</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground cursor-pointer focus-ring"
+            >
+              <option value="all">{`Все (${counts.all})`}</option>
+              <option value="WANT">{`${STATUS_LABELS.WANT} (${counts.WANT ?? 0})`}</option>
+              <option value="IN_PROGRESS">{`${STATUS_LABELS.IN_PROGRESS} (${counts.IN_PROGRESS ?? 0})`}</option>
+              <option value="COMPLETED">{`${STATUS_LABELS.COMPLETED} (${counts.COMPLETED ?? 0})`}</option>
+              <option value="DROPPED">{`${STATUS_LABELS.DROPPED} (${counts.DROPPED ?? 0})`}</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1 p-0.5 rounded-lg border border-border bg-background/50">
+            {TYPE_FILTERS.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setTypeFilter(type.value)}
+                className={cn(
+                  "text-xs px-2.5 py-1.5 rounded-md border transition-all duration-200 font-medium",
+                  typeFilter === type.value
+                    ? "bg-primary/20 text-primary border-primary/30"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={e=>setSortBy(e.target.value as typeof sortBy)}
+            className="text-xs bg-background border border-border rounded-lg px-3 py-2 focus:outline-none text-foreground cursor-pointer focus-ring"
+          >
+            {SORT_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          <button
+            onClick={() => setUnratedOnly((p) => !p)}
             className={cn(
-              "text-sm px-3.5 py-1.5 rounded-xl border transition-all duration-200 font-medium",
-              statusFilter===status
-                ? status==="all"
-                  ? "bg-primary/20 text-primary border-primary/30"
-                  : cn(STATUS_COLORS[status as CollectionStatus])
+              "text-xs px-3 py-2 rounded-lg border transition-all",
+              unratedOnly
+                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
                 : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-            )}>
-            {status==="all"
-              ? `Все · ${counts.all}`
-              : `${STATUS_LABELS[status as CollectionStatus]} · ${counts[status]??0}`}
+            )}
+            title="Показать элементы без оценки"
+          >
+            ⭐ Не оценено
           </button>
-        ))}
-        <button
-          onClick={() => setUnratedOnly((p) => !p)}
-          className={cn(
-            "text-sm px-3.5 py-1.5 rounded-xl border transition-all duration-200 font-medium",
-            unratedOnly
-              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-              : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+
+          <button onClick={()=>setShowFilters(s=>!s)}
+            className={cn(
+              "text-xs px-3 py-2 rounded-lg border transition-all flex items-center gap-1.5",
+              showFilters || hasActiveFilters
+                ? "bg-primary/20 text-primary border-primary/30"
+                : "border-border text-muted-foreground hover:border-primary/30"
+            )}>
+            🎛 Доп. фильтры
+            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"/>}
+          </button>
+
+          {hasActiveFilters && (
+            <button onClick={resetFilters}
+              className="text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-all">
+              ✕ Сбросить
+            </button>
           )}
-          title="Показать элементы без оценки"
-        >
-          ⭐ Не оценено
-        </button>
+        </div>
+
         <button
           onClick={() => {
             setMultiSelectMode((prev) => {
@@ -1226,7 +1272,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
             });
           }}
           className={cn(
-            "text-sm px-3.5 py-1.5 rounded-xl border transition-all duration-200 font-medium",
+            "text-xs px-3 py-2 rounded-lg border transition-all font-semibold",
             multiSelectMode
               ? "bg-primary/20 text-primary border-primary/30"
               : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
@@ -1288,66 +1334,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
         </div>
       )}
 
-      {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-muted-foreground">🏷</span>
-          {allTags.map(tag=>(
-            <button key={tag.id} onClick={()=>setTagFilter(tagFilter===tag.id?null:tag.id)}
-              className={cn(
-                "text-xs px-2.5 py-1 rounded-full border transition-all",
-                tagFilter===tag.id
-                  ? "text-white border-transparent scale-105"
-                  : "text-muted-foreground border-border hover:border-primary/30"
-              )}
-              style={tagFilter===tag.id?{backgroundColor:tag.color,boxShadow:`0 0 8px ${tag.color}50`}:{}}>
-              {tag.name}
-            </button>
-          ))}
-          {tagFilter && (
-            <button onClick={()=>setTagFilter(null)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
-          )}
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1 p-0.5 rounded-lg border border-border bg-background/50">
-            {TYPE_FILTERS.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setTypeFilter(type.value)}
-                className={cn(
-                  "text-xs px-2.5 py-1.5 rounded-md border transition-all duration-200 font-medium",
-                  typeFilter === type.value
-                    ? "bg-primary/20 text-primary border-primary/30"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                )}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
-          <select value={sortBy} onChange={e=>setSortBy(e.target.value as typeof sortBy)}
-            className="text-xs bg-background border border-border rounded-lg px-3 py-2 focus:outline-none text-foreground cursor-pointer">
-            {SORT_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <button onClick={()=>setShowFilters(s=>!s)}
-            className={cn(
-              "text-xs px-3 py-2 rounded-lg border transition-all flex items-center gap-1.5",
-              showFilters || hasActiveFilters
-                ? "bg-primary/20 text-primary border-primary/30"
-                : "border-border text-muted-foreground hover:border-primary/30"
-            )}>
-            🎛 Фильтры
-            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"/>}
-          </button>
-          {hasActiveFilters && (
-            <button onClick={resetFilters}
-              className="text-xs px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-all">
-              ✕ Сбросить
-            </button>
-          )}
-        </div>
+        <div className="flex items-center gap-2 flex-wrap" />
 
         <div className="flex bg-muted/30 border border-border rounded-xl overflow-hidden p-0.5 gap-0.5">
           {[
@@ -1374,7 +1362,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
       </div>
 
       {showFilters && (
-        <div className="glass rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in border border-primary/10">
+        <div className="glass rounded-xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-4 animate-fade-in border border-primary/10">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Жанр</label>
             <input type="text" value={genreFilter} onChange={e=>setGenreFilter(e.target.value)}
@@ -1391,6 +1379,21 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Год до</label>
             <input type="number" value={yearTo} onChange={e=>setYearTo(e.target.value)} placeholder="2025"
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 placeholder:text-muted-foreground/40"/>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тег</label>
+            <select
+              value={tagFilter ?? ""}
+              onChange={(e) => setTagFilter(e.target.value ? e.target.value : null)}
+              className="w-full text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground cursor-pointer focus-ring"
+            >
+              <option value="">Все теги</option>
+              {allTags.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}

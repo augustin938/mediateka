@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS, STATUS_LABELS, STATUS_COLORS } from "@/types";
 import type { CollectionItemWithMedia } from "@/types";
+import AchievementsClient from "@/components/achievements/AchievementsClient";
 
 interface ProfileUser {
   id: string;
@@ -43,6 +44,11 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
   const [currentFriendship, setCurrentFriendship] = useState(friendship);
   const [filter, setFilter] = useState<"all" | "movie" | "book" | "game">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [importingId, setImportingId] = useState<string | null>(null);
+  const [importedIds, setImportedIds] = useState<Set<string>>(() => new Set());
+  const [achOpen, setAchOpen] = useState(false);
+  const [achLoading, setAchLoading] = useState(false);
+  const [achStats, setAchStats] = useState<any | null>(null);
 
   const sendRequest = async () => {
     const res = await fetch("/api/friends", {
@@ -89,8 +95,98 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
     }
   };
 
+  const importToMyCollection = async (item: CollectionItemWithMedia) => {
+    const media = item.mediaItem as any;
+    setImportingId(item.id);
+    try {
+      const res = await fetch("/api/collection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mediaItemId: media.id,
+          status: "WANT",
+          externalId: media.externalId,
+          type: media.type,
+          title: media.title,
+          originalTitle: media.originalTitle ?? null,
+          description: media.description ?? null,
+          posterUrl: media.posterUrl ?? null,
+          year: media.year ?? null,
+          genres: media.genres ?? [],
+          externalRating: media.externalRating ?? null,
+          externalUrl: media.externalUrl ?? null,
+          director: media.director ?? null,
+          author: media.author ?? null,
+          developer: media.developer ?? null,
+        }),
+      });
+
+      if (res.status === 409) {
+        toast.info("Уже есть в твоей коллекции");
+        setImportedIds((prev) => new Set(prev).add(item.id));
+        return;
+      }
+      if (!res.ok) throw new Error();
+
+      toast.success("Добавлено в твою коллекцию");
+      setImportedIds((prev) => new Set(prev).add(item.id));
+    } catch {
+      toast.error("Не удалось добавить в коллекцию");
+    } finally {
+      setImportingId(null);
+    }
+  };
+
+  const filteredImported = useMemo(() => {
+    // на клиенте нет знания о твоей коллекции, поэтому считаем "импортировано" только в рамках текущей сессии
+    return importedIds;
+  }, [importedIds]);
+
+  const openAchievements = async () => {
+    if (!isFriend) return;
+    setAchOpen(true);
+    if (achStats) return;
+    setAchLoading(true);
+    try {
+      const res = await fetch(`/api/users/${profileUser.id}/achievements`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setAchStats(data.stats);
+    } catch {
+      toast.error("Не удалось загрузить достижения");
+      setAchOpen(false);
+    } finally {
+      setAchLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {achOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setAchOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+          <div className="relative glass w-full sm:max-w-5xl max-h-[92vh] sm:max-h-[86vh] rounded-t-3xl sm:rounded-2xl overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-border/60 flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">Достижения — {profileUser.name}</p>
+                <p className="text-xs text-muted-foreground">Прогресс и награды в Медиатеке</p>
+              </div>
+              <button className="w-9 h-9 rounded-xl border border-border/70 hover:bg-muted/40 transition-all focus-ring" onClick={() => setAchOpen(false)}>✕</button>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              {achLoading || !achStats ? (
+                <div className="text-center py-16 text-sm text-muted-foreground">
+                  <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
+                  Загружаю...
+                </div>
+              ) : (
+                <AchievementsClient stats={achStats} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile header */}
       <div className="glass rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
         <div className="w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-primary/20 flex-shrink-0">
@@ -122,6 +218,13 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
               >
                 💬 Чат
               </Link>
+              <button
+                onClick={openAchievements}
+                className="text-sm bg-amber-500/10 hover:bg-amber-500/15 text-amber-300 border border-amber-500/25 px-4 py-2 rounded-xl transition-colors"
+                title="Посмотреть достижения"
+              >
+                🏆 Достижения
+              </button>
               <details className="relative group">
                 <summary className="list-none cursor-pointer text-sm text-emerald-400 border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 rounded-xl select-none">
                   ✓ Друг
@@ -193,6 +296,22 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={item.mediaItem.posterUrl} alt={item.mediaItem.title} className="w-full h-full object-cover" loading="lazy" />
                     : <div className="w-full h-full flex items-center justify-center text-3xl">{MEDIA_TYPE_ICONS[item.mediaItem.type]}</div>}
+
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                    <button
+                      onClick={() => importToMyCollection(item)}
+                      disabled={importingId === item.id || filteredImported.has(item.id)}
+                      className={cn(
+                        "w-full text-xs font-semibold px-3 py-2 rounded-xl transition-all border focus-ring",
+                        filteredImported.has(item.id)
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                          : "bg-primary/25 hover:bg-primary/35 text-white border-white/10"
+                      )}
+                      title="Добавить к себе в коллекцию"
+                    >
+                      {filteredImported.has(item.id) ? "✓ Уже добавлено" : importingId === item.id ? "Добавляю..." : "+ В мою коллекцию"}
+                    </button>
+                  </div>
                 </div>
                 <div className="p-3 space-y-2">
                   <p className="text-xs font-semibold font-display leading-tight line-clamp-2 text-foreground">{item.mediaItem.title}</p>
