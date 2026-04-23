@@ -321,11 +321,13 @@ function GridView({
   onToggleSelect,
   selectionMode,
   onClickItem,
+  onShare,
 }: ViewProps & {
   selectedIds: string[];
   onToggleSelect: (id: string, e?: React.MouseEvent) => void;
   selectionMode: boolean;
   onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
+  onShare: (id: string) => void;
 }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -396,6 +398,13 @@ function GridView({
                   ✏️ Изменить
                 </button>
                 <button
+                  onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
+                  className="text-[10px] bg-black/30 hover:bg-black/40 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft"
+                  title="Поделиться"
+                >
+                  💬
+                </button>
+                <button
                   onClick={e=>{e.stopPropagation();onRemove(item.id);}}
                   className="text-[10px] bg-red-500/40 hover:bg-red-500/60 text-white py-1.5 px-2 rounded-lg backdrop-blur-sm transition-colors focus-ring interactive-soft">
                   🗑
@@ -435,11 +444,13 @@ function ListView({
   onToggleSelect,
   selectionMode,
   onClickItem,
+  onShare,
 }: ViewProps & {
   selectedIds: string[];
   onToggleSelect: (id: string, e?: React.MouseEvent) => void;
   selectionMode: boolean;
   onClickItem: (item: CollectionItemWithMedia, e: React.MouseEvent) => void;
+  onShare: (id: string) => void;
 }) {
   return (
     <div className="space-y-1.5">
@@ -524,6 +535,12 @@ function ListView({
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onShare(item.id); }}
+                className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                title="Поделиться">
+                💬
               </button>
               <button
                 onClick={e=>{e.stopPropagation();onRemove(item.id);}}
@@ -831,6 +848,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   const deleteOpRef = useRef<{ id: string; cancelled: boolean } | null>(null);
   const lastSelectedIdRef = useRef<string | null>(null);
   const selectionMode = selectedIds.length > 0;
+  const [shareItemId, setShareItemId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(()=>{ fetch("/api/tags").then(r=>r.json()).then(d=>setAllTags(d.tags??[])); },[]);
   useEffect(()=>{ if(!editingId) return; const item=items.find(i=>i.id===editingId); setItemTags((item as any)?.tags??[]); },[editingId,items]);
@@ -1024,6 +1043,35 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
     }
   };
 
+  const openShare = (id: string) => {
+    setShareItemId(id);
+    setShareOpen(true);
+  };
+
+  const [friends, setFriends] = useState<{ id: string; other: { id: string; name: string; email: string; image: string | null } }[]>([]);
+  useEffect(() => {
+    fetch("/api/friends")
+      .then((r) => r.json())
+      .then((d) => setFriends(d.friends ?? []))
+      .catch(() => {});
+  }, []);
+
+  const sendShare = async (toUserId: string) => {
+    if (!shareItemId) return;
+    const res = await fetch("/api/chat/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toUserId, collectionItemId: shareItemId }),
+    });
+    if (res.ok) {
+      toast.success("Отправлено");
+      setShareOpen(false);
+      setShareItemId(null);
+    } else {
+      toast.error("Не удалось отправить");
+    }
+  };
+
   const startEdit = (item:CollectionItemWithMedia)=>{ setEditingId(item.id); setEditRating(item.rating??null); setEditReview(item.review??""); setDetailItem(null); };
 
   const handleToggleTag = async(tag:Tag)=>{
@@ -1074,6 +1122,42 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
 
   return (
     <div className="space-y-5">
+      {shareOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShareOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md glass rounded-2xl overflow-hidden animate-fade-in-scale" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-border/60 flex items-center justify-between">
+              <p className="font-semibold text-foreground">Поделиться с другом</p>
+              <button className="w-9 h-9 rounded-xl border border-border/70 hover:bg-muted/40 transition-all focus-ring" onClick={() => setShareOpen(false)}>✕</button>
+            </div>
+            <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+              {friends.length === 0 ? (
+                <div className="text-center py-10 text-sm text-muted-foreground">Нет друзей</div>
+              ) : (
+                friends.map((f) => (
+                  <button
+                    key={f.other.id}
+                    onClick={() => sendShare(f.other.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-muted/40 transition-all text-left focus-ring"
+                  >
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-muted/50 flex items-center justify-center flex-shrink-0">
+                      {f.other.image
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={f.other.image} alt={f.other.name} className="w-full h-full object-cover" />
+                        : <div className="text-sm font-bold text-primary">{f.other.name.slice(0, 1).toUpperCase()}</div>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{f.other.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{f.other.email}</p>
+                    </div>
+                    <span className="text-xs text-primary">Отправить →</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <StatBar items={items}/>
 
@@ -1336,8 +1420,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
-                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
+                  ? <GridView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={movies} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1368,8 +1452,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
-                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
+                  ? <GridView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={books} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1399,8 +1483,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
                   </div>
                 </div>
                 {viewMode==="grid"
-                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
-                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>}
+                  ? <GridView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
+                  : <ListView items={games} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>}
               </div>
             )}
 
@@ -1419,8 +1503,8 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
           };
           return (
         viewMode==="grid"
-          ? <GridView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
-          : <ListView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem}/>
+          ? <GridView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
+          : <ListView items={filtered} onSelect={setDetailItem} onEdit={startEdit} onRemove={removeItem} selectedIds={selectedIds} onToggleSelect={toggleSelect} selectionMode={selectionMode} onClickItem={onClickItem} onShare={openShare}/>
           );
         })()
       )}

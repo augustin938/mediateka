@@ -19,6 +19,8 @@ export const collectionStatusEnum = pgEnum("collection_status", [
   "DROPPED",
 ]);
 
+export const chatMessageTypeEnum = pgEnum("chat_message_type", ["text", "share"]);
+
 export const users = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -199,6 +201,44 @@ export const collectionItemTags = pgTable("collection_item_tag", {
   uniqueIdx: uniqueIndex("collection_item_tag_idx").on(t.collectionItemId, t.tagId),
 }));
 
+export const chatConversations = pgTable("chat_conversation", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userAId: text("user_a_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userBId: text("user_b_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  lastMessageAt: timestamp("last_message_at"),
+}, (t) => ({
+  uniquePairIdx: uniqueIndex("chat_conversation_pair_idx").on(t.userAId, t.userBId),
+}));
+
+export const chatMessages = pgTable("chat_message", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  conversationId: text("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: chatMessageTypeEnum("type").notNull().default("text"),
+  text: text("text"),
+  sharedCollectionItemId: text("shared_collection_item_id").references(() => collectionItems.id, { onDelete: "set null" }),
+  // Snapshot for shares, so chat doesn't break if collection item changes/deletes.
+  sharedTitle: text("shared_title"),
+  sharedType: mediaTypeEnum("shared_type"),
+  sharedYear: integer("shared_year"),
+  sharedPosterUrl: text("shared_poster_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at"),
+  deletedByUserId: text("deleted_by_user_id").references(() => users.id, { onDelete: "set null" }),
+});
+
+export const chatMessageReactions = pgTable("chat_message_reaction", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  messageId: text("message_id").notNull().references(() => chatMessages.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  emoji: varchar("emoji", { length: 32 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({
+  uniqueIdx: uniqueIndex("chat_message_reaction_unique_idx").on(t.messageId, t.userId, t.emoji),
+}));
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;
@@ -207,3 +247,7 @@ export type NewMediaItem = typeof mediaItems.$inferInsert;
 export type NewCollectionItem = typeof collectionItems.$inferInsert;
 export type MediaType = "movie" | "book" | "game";
 export type CollectionStatus = "WANT" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
+
+export type ChatConversation = typeof chatConversations.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type ChatMessageReaction = typeof chatMessageReactions.$inferSelect;
