@@ -76,10 +76,10 @@ function useTypewriter(text: string, speedMs = 24) {
 export default function LandingPage() {
   const titleFull = "Твоя личная медиатека";
   const titlePrefix = "Твоя личная ";
-  const typedTitle = useTypewriter(titleFull, 24);
+  const typedTitle = useTypewriter(titleFull, 42);
   const typedSubtitle = useTypewriter(
     "Каталогизируй свои фильмы, книги и игры. Ищи по миллионам произведений, добавляй в коллекцию, оставляй оценки и отслеживай прогресс.",
-    16
+    28
   );
 
   const typedTitlePrefix = typedTitle.slice(0, Math.min(typedTitle.length, titlePrefix.length));
@@ -120,12 +120,12 @@ export default function LandingPage() {
         <h1 className="font-display text-5xl md:text-7xl font-extrabold leading-tight mb-6 min-h-[78px] md:min-h-[110px]">
           {typedTitlePrefix}
           <span className="text-gradient">{typedTitleWord}</span>
-          <span className="inline-block w-[1ch] text-muted-foreground/50 animate-pulse">▍</span>
+          <span className="inline-block w-[1ch] text-foreground/50 dark:text-muted-foreground/50 animate-pulse">▍</span>
         </h1>
 
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed min-h-[84px]">
           {typedSubtitle}
-          <span className="inline-block w-[1ch] text-muted-foreground/50 animate-pulse">▍</span>
+          <span className="inline-block w-[1ch] text-foreground/50 dark:text-muted-foreground/50 animate-pulse">▍</span>
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

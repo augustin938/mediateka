@@ -32,7 +32,7 @@ export default function AnimatedHeadline({ name }: { name: string }) {
       </h1>
       <p className={cn("text-muted-foreground min-h-[22px]")}>
         {line}
-        <span className="inline-block w-[1ch] text-muted-foreground/50 animate-pulse">▍</span>
+        <span className="inline-block w-[1ch] text-foreground/50 dark:text-muted-foreground/50 animate-pulse">▍</span>
       </p>
     </div>
   );

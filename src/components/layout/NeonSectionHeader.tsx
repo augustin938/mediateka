@@ -47,8 +47,8 @@ export default function NeonSectionHeader({
             )}
           </div>
           <p className="text-muted-foreground min-h-[22px]">
-            <span className="text-cyan-200/90">{typed}</span>
-            <span className="inline-block w-[1ch] text-cyan-200/40 animate-pulse">▍</span>
+            <span className="text-foreground/80 dark:text-cyan-200/90">{typed}</span>
+            <span className="inline-block w-[1ch] text-foreground/50 dark:text-cyan-200/40 animate-pulse">▍</span>
           </p>
         </div>
         <div className="hidden sm:block w-32 h-px mt-5 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
