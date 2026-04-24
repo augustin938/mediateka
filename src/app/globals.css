@@ -88,6 +88,13 @@
     background-attachment: fixed;
   }
 
+  .theme-light body {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+
   :root:not(.dark) body {
     background-image:
       radial-gradient(ellipse 80% 40% at 50% -10%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);

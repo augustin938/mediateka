@@ -4,6 +4,27 @@ import { ThemeProvider } from "next-themes";
 import SiteFooter from "@/components/layout/SiteFooter";
 import "./globals.css";
 
+const themeInitScript = `
+(() => {
+  try {
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem("mediateka-theme");
+    const legacyTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolved = savedTheme ?? legacyTheme ?? (prefersDark ? "dark" : "light");
+
+    root.classList.remove("theme-dark", "theme-light", "theme-midnight", "theme-forest", "theme-sunset", "theme-rose");
+    root.classList.add("theme-" + resolved);
+
+    if (resolved === "light") root.classList.remove("dark");
+    else root.classList.add("dark");
+
+    localStorage.setItem("mediateka-theme", resolved);
+    localStorage.setItem("theme", resolved === "light" ? "light" : "dark");
+  } catch {}
+})();
+`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
@@ -43,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />

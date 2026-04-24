@@ -165,6 +165,9 @@ function applyTheme(id: ThemeId) {
   });
 
   localStorage.setItem("mediateka-theme", id);
+  // Синхронизируем с next-themes, чтобы после логина/перезагрузки
+  // класс темы сразу был корректным и не давал смешения светлой/тёмной палитры.
+  localStorage.setItem("theme", id === "light" ? "light" : "dark");
 }
 
 function ThemePicker() {
