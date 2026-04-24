@@ -6,6 +6,7 @@ import { collectionItems, mediaItems, activityLogs } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { updateCollectionItemSchema as updateCollectionSchema } from "@/lib/validations/collection";
 
+// Важный внутренний helper logActivity для локальной логики.
 async function logActivity(userId: string, action: string, media: {
   id: string; type: string; title: string; posterUrl?: string | null;
 }, details?: string) {

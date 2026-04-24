@@ -18,6 +18,7 @@ interface OLSearchResult {
   numFound: number;
 }
 
+// Публичная функция searchOpenLibrary для внешнего использования модуля.
 export async function searchOpenLibrary(
   query: string
 ): Promise<Omit<MediaItem, "createdAt" | "updatedAt">[]> {
@@ -54,6 +55,7 @@ export async function searchOpenLibrary(
   });
 }
 
+// Публичная функция getOpenLibraryDetails для внешнего использования модуля.
 export async function getOpenLibraryDetails(
   workId: string
 ): Promise<Partial<MediaItem> | null> {

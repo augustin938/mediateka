@@ -7,6 +7,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { addToCollectionSchema } from "@/lib/validations/collection";
 import type { CollectionItemWithMedia } from "@/types";
 
+// Записывает действие пользователя в ленту активности.
 async function logActivity(userId: string, action: string, media: {
   id: string; type: string; title: string; posterUrl?: string | null;
 }, details?: string) {
@@ -26,6 +27,7 @@ async function logActivity(userId: string, action: string, media: {
   }
 }
 
+// Возвращает элементы коллекции текущего пользователя (опционально по статусу).
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,6 +55,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ items: result });
 }
 
+// Добавляет элемент в коллекцию: валидирует входные данные, upsert'ит медиа и пишет активность.
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

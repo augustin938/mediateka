@@ -6,6 +6,7 @@ import { chatBus } from "@/lib/chat/pubsub";
 
 export const runtime = "nodejs";
 
+// Открывает SSE-поток для чата между друзьями и отправляет новые сообщения в реальном времени.
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
+      // Форматирует и отправляет SSE-событие клиенту.
       const send = (event: string, data: any) => {
         controller.enqueue(encoder.encode(`event: ${event}\n`));
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
@@ -39,6 +41,7 @@ export async function GET(req: NextRequest) {
         controller.enqueue(encoder.encode(`event: ping\ndata: {}\n\n`));
       }, 25000);
 
+      // Аккуратно закрывает stream и снимает подписки при разрыве соединения.
       const close = () => {
         clearInterval(keepAlive);
         off();

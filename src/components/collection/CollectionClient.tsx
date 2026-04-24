@@ -45,13 +45,17 @@ const STATUS_ICON: Record<CollectionStatus, string> = {
   WANT: "🔖", IN_PROGRESS: "▶️", COMPLETED: "✅", DROPPED: "❌",
 };
 
+// Детеминированный индекс палитры по id (нужен для стабильных цветов между рендерами).
 function getSpineColorIndex(id: string) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
   return Math.abs(hash) % SPINE_COLORS.length;
 }
+// Возвращает css-градиент "корешка книги" для элемента.
 function getSpineColor(id: string) { return SPINE_COLORS[getSpineColorIndex(id)]; }
+// Возвращает hex-цвет корешка (используется для цветовой сортировки).
 function getSpineHex(id: string)   { return SPINE_HEX[getSpineColorIndex(id)]; }
+// Конвертация HEX в оттенок Hue для сравнения цветов.
 function hexToHue(hex: string): number {
   const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
   const max = Math.max(r,g,b), min = Math.min(r,g,b);
@@ -62,16 +66,20 @@ function hexToHue(hex: string): number {
   else              h=((r-g)/d+4)/6;
   return h*360;
 }
+// Высота "книги" слегка варьируется по id для естественного вида полки.
 function getBookHeight(id: string, hasPoster: boolean) {
   let hash=0; for (let i=0;i<id.length;i++) hash=id.charCodeAt(i)+((hash<<5)-hash);
   return hasPoster ? 120+(Math.abs(hash)%30) : 90+(Math.abs(hash)%50);
 }
+// Небольшой наклон книги, чтобы визуально избежать "идеальной сетки".
 function getBookTilt(id: string) {
   let hash=0; for (let i=0;i<id.length;i++) hash=id.charCodeAt(i)+((hash<<5)-hash);
   return (Math.abs(hash)%5)-2;
 }
+// Ширина корешка зависит от наличия постера и id.
 function getBookWidth(id: string, hasPoster: boolean) { return hasPoster ? 52 : 26+(id.charCodeAt(2)%10); }
 
+// Верхняя статистическая плашка по статусам и средней оценке.
 function StatBar({ items }: { items: CollectionItemWithMedia[] }) {
   const total = items.length;
   if (total === 0) return null;
@@ -125,10 +133,12 @@ const SHELF_KEY = "shelf_order_v2";
 const SHELF_GAP = 3;
 const SHELF_PAD = 48;
 
+// Читает сохранённый пользовательский порядок книг с полки.
 function loadSavedIds(): string[] {
   if (typeof window==="undefined") return [];
   try { return JSON.parse(localStorage.getItem(SHELF_KEY)??"[]"); } catch { return []; }
 }
+// Применяет сохранённый порядок id к текущему набору элементов.
 function applyOrder(src: CollectionItemWithMedia[], ids: string[]): CollectionItemWithMedia[] {
   if (!ids.length) return src;
   const m = new Map(ids.map((id,i)=>[id,i]));
@@ -137,6 +147,7 @@ function applyOrder(src: CollectionItemWithMedia[], ids: string[]): CollectionIt
 
 interface ShelfProps { items: CollectionItemWithMedia[]; onSelect:(i:CollectionItemWithMedia)=>void; onEdit:(i:CollectionItemWithMedia)=>void; onRemove:(id:string)=>void; }
 
+// Режим "книжной полки" с drag-and-drop, локальным порядком и цветовой сортировкой.
 function ShelfView({ items, onSelect }: ShelfProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -152,6 +163,7 @@ function ShelfView({ items, onSelect }: ShelfProps) {
 
   useEffect(()=>{
     const el=containerRef.current; if(!el) return;
+    // Отслеживаем ширину контейнера для адаптивного переноса "книг" по рядам.
     const ro=new ResizeObserver(([e])=>setContainerWidth(e.contentRect.width));
     ro.observe(el); setContainerWidth(el.getBoundingClientRect().width);
     return ()=>ro.disconnect();
@@ -169,6 +181,7 @@ function ShelfView({ items, onSelect }: ShelfProps) {
     try{localStorage.setItem(SHELF_KEY,JSON.stringify(ids));}catch{}
   };
 
+  // Нужен для сортировки по цвету: при постере считаем hue по url, иначе по цвету корешка.
   const getHue=(item:CollectionItemWithMedia)=>{
     if(item.mediaItem.posterUrl){let h=0;for(let i=0;i<item.mediaItem.posterUrl.length;i++)h=item.mediaItem.posterUrl.charCodeAt(i)+((h<<5)-h);return Math.abs(h)%360;}
     return hexToHue(getSpineHex(item.id));
@@ -178,6 +191,7 @@ function ShelfView({ items, onSelect }: ShelfProps) {
 
   const rows=useMemo(()=>{
     if(!containerWidth) return [displayItems];
+    // Формируем "полки": ряды по доступной ширине с учётом ширины каждого элемента.
     const usable=containerWidth-SHELF_PAD;
     const result:CollectionItemWithMedia[][]=[];
     let row:CollectionItemWithMedia[]=[],rowW=0;
@@ -312,6 +326,7 @@ function ShelfView({ items, onSelect }: ShelfProps) {
 
 interface ViewProps { items:CollectionItemWithMedia[]; onSelect:(i:CollectionItemWithMedia)=>void; onEdit:(i:CollectionItemWithMedia)=>void; onRemove:(id:string)=>void; }
 
+// Плиточный вид коллекции с hover-действиями и мультивыбором.
 function GridView({
   items,
   onSelect,
@@ -442,6 +457,7 @@ function GridView({
   );
 }
 
+// Компактный строчный вид коллекции для быстрого сканирования списка.
 function ListView({
   items,
   onSelect,
@@ -572,6 +588,7 @@ function ListView({
   );
 }
 
+// Модальное окно детального просмотра карточки с быстрыми действиями.
 function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
   item: CollectionItemWithMedia;
   onClose: ()=>void;
@@ -679,6 +696,7 @@ function DetailModal({ item, onClose, onEdit, onRemove, onStatusChange }: {
   );
 }
 
+// Модальное редактирование статуса, оценки, отзыва и тегов.
 function EditModal({ editStatus, editRating, editReview, allTags, itemTags, onStatusChange, onRatingChange, onReviewChange, onSave, onClose, onToggleTag, onCreateTag, onDeleteTag }: {
   editingId: string;
   editStatus: CollectionStatus;
@@ -860,6 +878,7 @@ function EditModal({ editStatus, editRating, editReview, allTags, itemTags, onSt
   );
 }
 
+// Главный клиентский экран коллекции: фильтры, сортировка, bulk-операции, детали и теги.
 export default function CollectionClient({ initialItems }: CollectionClientProps) {
   const [items, setItems] = useState<CollectionItemWithMedia[]>(initialItems);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -892,12 +911,14 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
   useEffect(()=>{ fetch("/api/tags").then(r=>r.json()).then(d=>setAllTags(d.tags??[])); },[]);
   useEffect(()=>{ if(!editingId) return; const item=items.find(i=>i.id===editingId); setItemTags((item as any)?.tags??[]); },[editingId,items]);
 
+  // Собираем уникальные жанры из текущего набора элементов для фильтра.
   const allGenres = useMemo(()=>{
     const g = new Set<string>();
     items.forEach(i=>i.mediaItem.genres?.forEach(x=>g.add(x)));
     return Array.from(g).sort();
   },[items]);
 
+  // Центральный пайплайн фильтрации/поиска/сортировки для отображения списка.
   const filtered = useMemo(()=>{
     let r = [...items];
     if(searchQuery.trim()){
@@ -933,6 +954,7 @@ export default function CollectionClient({ initialItems }: CollectionClientProps
     setSelectedIds((prev) => prev.filter((id) => visible.has(id)));
   }, [filtered]);
 
+  // Переключает одиночное/диапазонное (Shift) выделение элементов списка.
   const toggleSelect = (id: string, e?: React.MouseEvent) => {
     const isShift = !!e?.shiftKey;
     if (isShift && lastSelectedIdRef.current) {

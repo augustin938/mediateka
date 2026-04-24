@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { tags } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,6 +21,7 @@ const TagCreateSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
 });
 
+// Обрабатывает POST-запрос текущего API-маршрута.
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

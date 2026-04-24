@@ -63,6 +63,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+// Основной экспортируемый компонент файла.
 export default function StatsClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);

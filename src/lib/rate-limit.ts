@@ -13,6 +13,7 @@ if (typeof setInterval !== "undefined") {
   cleanupInterval.unref?.();
 }
 
+// Публичная функция rateLimit для внешнего использования модуля.
 export function rateLimit(req: Request, namespace: string, limit = 60, windowSec = 60) {
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

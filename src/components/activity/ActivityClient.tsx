@@ -26,6 +26,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: string; color: string
   want:      { label: "Хочет",      icon: "🔖", color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
 };
 
+// Важный внутренний helper groupByDate для локальной логики.
 function groupByDate(logs: ActivityLog[]) {
   const groups: Record<string, ActivityLog[]> = {};
   logs.forEach((log) => {
@@ -36,6 +37,7 @@ function groupByDate(logs: ActivityLog[]) {
   return groups;
 }
 
+// Основной экспортируемый компонент файла.
 export default function ActivityClient() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);

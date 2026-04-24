@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
   game: "Игра",
 };
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

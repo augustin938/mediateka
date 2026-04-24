@@ -3,6 +3,7 @@
 const RECENT_SEARCHES_KEY = "mediateka-recent-searches";
 const RECENT_SEARCHES_MAX = 8;
 
+// Читает и валидирует историю последних запросов из localStorage.
 export function readRecentSearches() {
   try {
     const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
@@ -14,6 +15,7 @@ export function readRecentSearches() {
   }
 }
 
+// Добавляет новый запрос в начало истории, убирает дубли и обрезает до лимита.
 export function pushRecentSearch(prev: string[], query: string) {
   const cleaned = query.trim();
   if (cleaned.length < 2) return prev;

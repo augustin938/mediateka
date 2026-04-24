@@ -8,11 +8,13 @@ import { assertFriends, getOrCreateConversation, normalizePair } from "@/lib/cha
 import { publishConversationEvent } from "@/lib/chat/pubsub";
 import { createNotification } from "@/lib/notifications";
 
+// Важный внутренний helper parseIntSafe для локальной логики.
 function parseIntSafe(v: string | null, d: number) {
   const n = v ? parseInt(v, 10) : NaN;
   return Number.isFinite(n) ? n : d;
 }
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,6 +79,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
+// Обрабатывает POST-запрос текущего API-маршрута.
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

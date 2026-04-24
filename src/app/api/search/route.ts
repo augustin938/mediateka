@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { limits } from "@/lib/rate-limit";
 
+// Важный внутренний helper getEnvKey для локальной логики.
 function getEnvKey(name: string): string | null {
   const raw = process.env[name];
   if (!raw) return null;

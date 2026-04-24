@@ -52,6 +52,7 @@ const TIER_THRESHOLDS = [
   { min: 0,  label: "🌱 Новичок",  color: "text-muted-foreground" },
 ];
 
+// Важный внутренний helper getTier для локальной логики.
 function getTier(score: number, total: number) {
   const pct = total > 0 ? (score / total) * 100 : 0;
   return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
@@ -152,6 +153,7 @@ interface QuestionCardProps {
   lives: number;
 }
 
+// Важный внутренний helper QuestionCard для локальной логики.
 function QuestionCard({ q, qIndex, total, score, streak, onAnswer, answered, isCorrect, onNext, onExit, mode, lives }: QuestionCardProps) {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECS);
   const [revealed, setRevealed] = useState(0);
@@ -360,6 +362,7 @@ interface ResultsProps {
   onSetup: () => void;
 }
 
+// Важный внутренний helper ResultsScreen для локальной логики.
 function ResultsScreen({ points, correctAnswers, total, streak, mode, category, history, onRestart, onSetup }: ResultsProps) {
   const [saved, setSaved] = useState(false);
 
@@ -422,6 +425,7 @@ function ResultsScreen({ points, correctAnswers, total, streak, mode, category, 
   );
 }
 
+// Основной экспортируемый компонент файла.
 export default function QuizClient() {
   const [phase,    setPhase]    = useState<"setup" | "playing" | "results">("setup");
   const [mode,     setMode]     = useState<Mode>("classic");

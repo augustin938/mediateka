@@ -39,6 +39,7 @@ type ChatMessage = {
   reactions?: { emoji: string; count: number; mine: boolean }[];
 };
 
+// Универсальный аватар: фото пользователя или fallback с инициалами.
 function Avatar({ image, name, size = 40 }: { image?: string | null; name: string; size?: number }) {
   const initials = name?.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
   if (image) return (
@@ -52,6 +53,7 @@ function Avatar({ image, name, size = 40 }: { image?: string | null; name: strin
   );
 }
 
+// Боковая панель чата с SSE-обновлениями, реакциями и шарингом медиа.
 function ChatDrawer({
   open,
   onClose,
@@ -74,12 +76,14 @@ function ChatDrawer({
 
   const friendId = friend?.id ?? null;
 
+  // Прокручивает список сообщений к последнему элементу.
   const scrollToBottom = () => {
     const el = listRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   };
 
+  // Загружает историю переписки и отмечает shared-элементы, которые уже в коллекции.
   const loadMessages = useCallback(async () => {
     if (!friendId) return;
     setLoading(true);
@@ -115,6 +119,7 @@ function ChatDrawer({
     }
   }, [friendId]);
 
+  // Применяет входящие события из SSE (новое сообщение, удаление, реакции).
   const applyEvent = (payload: any) => {
     if (payload?.type === "message:new" && payload.message) {
       const msg = payload.message as ChatMessage;
@@ -165,6 +170,7 @@ function ChatDrawer({
     }
   };
 
+  // Переключает реакцию пользователя на сообщение.
   const toggleReaction = async (messageId: string, emoji: string) => {
     try {
       const res = await fetch(`/api/chat/messages/${messageId}/reactions`, {
@@ -209,6 +215,7 @@ function ChatDrawer({
     };
   }, [open, friendId]);
 
+  // Отправляет текстовое сообщение и оптимистично добавляет его в локальный список.
   const send = async () => {
     if (!friendId) return;
     const t = text.trim();
@@ -234,6 +241,7 @@ function ChatDrawer({
     }
   };
 
+  // Добавляет shared-контент из чата в коллекцию текущего пользователя.
   const addSharedToCollection = async (m: ChatMessage) => {
     if (m.type !== "share" || !m.sharedTitle || !m.sharedType) return;
     if (ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)) {
@@ -274,6 +282,7 @@ function ChatDrawer({
     }
   };
 
+  // Удаляет сообщение у всех участников текущего диалога.
   const deleteMessage = async (messageId: string) => {
     try {
       const res = await fetch(`/api/chat/messages/${messageId}`, { method: "DELETE" });
@@ -437,6 +446,7 @@ function ChatDrawer({
   );
 }
 
+// Основной экран "Друзья": список, входящие/исходящие заявки и запуск чата.
 export default function FriendsClient({ currentUserId }: { currentUserId: string }) {
   const [friends, setFriends] = useState<FriendEntry[]>([]);
   const [incoming, setIncoming] = useState<FriendEntry[]>([]);
@@ -450,6 +460,7 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
   const [chatFriend, setChatFriend] = useState<FriendUser | null>(null);
   const searchParams = useSearchParams();
 
+  // Загружает актуальное состояние дружбы (друзья, входящие и исходящие заявки).
   const load = useCallback(() => {
     setLoading(true);
     fetch("/api/friends")
@@ -485,6 +496,7 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Отправляет заявку в друзья выбранному пользователю.
   const sendRequest = async (addresseeId: string) => {
     const res = await fetch("/api/friends", {
       method: "POST",
@@ -503,6 +515,7 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
     }
   };
 
+  // Принимает или отклоняет входящую заявку.
   const respondToRequest = async (friendshipId: string, status: "accepted" | "rejected") => {
     const res = await fetch(`/api/friends/${friendshipId}`, {
       method: "PATCH",
@@ -515,6 +528,7 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
     }
   };
 
+  // Удаляет пользователя из друзей.
   const removeFriend = async (friendshipId: string) => {
     await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
     toast.success("Друг удалён");

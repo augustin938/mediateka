@@ -39,6 +39,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile":         "Профиль",
 };
 
+// Печатает заголовок страницы по буквам для аккуратной анимации.
 function useTypewriter(text: string, speedMs = 26) {
   const [out, setOut] = useState("");
   useEffect(() => {
@@ -141,6 +142,7 @@ const THEMES = [
 
 type ThemeId = typeof THEMES[number]["id"];
 
+// Применяет тему: классы, CSS-переменные и синхронизацию с next-themes.
 function applyTheme(id: ThemeId) {
   const theme = THEMES.find((t) => t.id === id);
   if (!theme) return;
@@ -168,6 +170,7 @@ function applyTheme(id: ThemeId) {
   localStorage.setItem("theme", id === "light" ? "light" : "dark");
 }
 
+// Выпадающий выбор темы оформления в топбаре.
 function ThemePicker() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<ThemeId>("dark");
@@ -244,6 +247,7 @@ function ThemePicker() {
   );
 }
 
+// Верхняя панель: быстрый поиск, навигация, тема и уведомления.
 export default function DashboardTopbar() {
   const pathname = usePathname();
   const router = useRouter();

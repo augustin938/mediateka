@@ -77,6 +77,7 @@ const socialLinks = [
   },
 ];
 
+// Основной экспортируемый компонент файла.
 export default function SiteFooter() {
   const year = new Date().getFullYear();
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });

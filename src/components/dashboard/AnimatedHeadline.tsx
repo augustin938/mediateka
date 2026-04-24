@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
+// Хук useTypewriter инкапсулирует связанную UI-логику.
 function useTypewriter(text: string, speedMs = 28) {
   const [out, setOut] = useState("");
 

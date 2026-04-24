@@ -40,6 +40,7 @@ const TIER_THRESHOLDS = [
   { min: 30, label: "📚 Любитель", color: "text-blue-400" },
   { min: 0,  label: "🌱 Новичок",  color: "text-muted-foreground" },
 ];
+// Важный внутренний helper getTier для локальной логики.
 function getTier(correctAnswers: number, total: number) {
   const pct = total > 0 ? (correctAnswers / total) * 100 : 0;
   return TIER_THRESHOLDS.find((t) => pct >= t.min) ?? TIER_THRESHOLDS.at(-1)!;
@@ -384,6 +385,7 @@ function QuizHistory({ results }: { results: QuizResult[] }) {
   );
 }
 
+// Основной экспортируемый компонент файла.
 export default function ProfileClient({ user, stats, activityByDay, collection, initialPinnedIds, quizHistory }: Props) {
   const [name, setName] = useState(user.name);
   const [image, setImage] = useState<string | null>(user.image);

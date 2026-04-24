@@ -31,6 +31,7 @@ if (process.env.NODE_ENV === "production" && !g.__mediateka_chatBusWarned) {
   console.warn("[chat] In-memory pubsub is active. Realtime chat is not cross-instance.");
 }
 
+// Публичная функция publishConversationEvent для внешнего использования модуля.
 export function publishConversationEvent(conversationId: string, payload: any) {
   chatBus.emit(`conversation:${conversationId}`, payload);
 }

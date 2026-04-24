@@ -6,6 +6,7 @@ import { collectionItems, mediaItems, activityLogs } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { formatLocalMonthKey, formatRuMonthLabel } from "@/lib/date";
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -36,6 +36,7 @@ const ACTION_LABEL: Record<string, string> = {
   game: "Играть",
 };
 
+// Основной экспортируемый компонент файла.
 export default function RandomPicker() {
   const [type, setType] = useState("");
   const [item, setItem] = useState<CollectionItem | null>(null);

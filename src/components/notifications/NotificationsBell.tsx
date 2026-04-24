@@ -22,6 +22,7 @@ const TYPE_ICONS: Record<string, string> = {
   message: "💬",
 };
 
+// Колокольчик уведомлений с периодической подгрузкой и действиями read/delete.
 export default function NotificationsBell() {
   const [notifs, setNotifs] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -29,6 +30,7 @@ export default function NotificationsBell() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Загружает список уведомлений и счётчик непрочитанных.
   const load = () => {
     fetch("/api/notifications")
       .then((r) => r.json())
@@ -63,18 +65,21 @@ export default function NotificationsBell() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Массово отмечает все уведомления как прочитанные.
   const markAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnread(0);
   };
 
+  // Отмечает одно уведомление как прочитанное.
   const markRead = async (id: string) => {
     await fetch(`/api/notifications/${id}`, { method: "PATCH" });
     setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
     setUnread((prev) => Math.max(0, prev - 1));
   };
 
+  // Удаляет уведомление и корректирует unread-счётчик.
   const deleteNotif = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     let removedUnread = false;
@@ -89,6 +94,7 @@ export default function NotificationsBell() {
     }
   };
 
+  // Обрабатывает клик по уведомлению: read + переход по deep-link.
   const handleClick = async (notif: Notification) => {
     if (!notif.read) await markRead(notif.id);
     setOpen(false);

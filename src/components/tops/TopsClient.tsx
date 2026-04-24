@@ -31,6 +31,7 @@ const TABS = [
 const RANK_COLORS = ["text-amber-400", "text-slate-300", "text-amber-600"];
 const RANK_BG = ["bg-amber-400/10", "bg-slate-300/10", "bg-amber-600/10"];
 
+// Основной экспортируемый компонент файла.
 export default function TopsClient() {
   const [activeTab, setActiveTab] = useState("movies");
   const [items, setItems] = useState<TopItem[]>([]);

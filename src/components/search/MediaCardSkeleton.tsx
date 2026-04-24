@@ -1,3 +1,4 @@
+// Основной экспортируемый компонент файла.
 export default function MediaCardSkeleton() {
   return (
     <div className="glass rounded-xl overflow-hidden">

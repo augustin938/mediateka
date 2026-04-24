@@ -11,12 +11,14 @@ import { compare } from "bcryptjs";
 
 const scryptAsync = promisify(scrypt);
 
+// Важный внутренний helper hashPassword для локальной логики.
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
+// Важный внутренний helper verifyPassword для локальной логики.
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
   try {
     // Хеши Better Auth начинаются с "$2", поэтому проверяем текущий пароль явно.

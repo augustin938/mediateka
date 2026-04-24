@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getQuizResultsByUser, insertQuizResult } from "@/lib/quiz-results";
 
+// Важный внутренний helper getCorrectAnswers для локальной логики.
 function getCorrectAnswers(result: {
   score: number;
   correctAnswers: number | null;
@@ -11,6 +12,7 @@ function getCorrectAnswers(result: {
   return result.correctAnswers ?? result.score;
 }
 
+// Важный внутренний helper getPoints для локальной логики.
 function getPoints(result: {
   score: number;
   points: number | null;
@@ -32,6 +34,7 @@ const QuizResultSchema = z.object({
   path: ["correctAnswers"],
 });
 
+// Обрабатывает POST-запрос текущего API-маршрута.
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,6 +60,7 @@ export async function POST(req: Request) {
   return NextResponse.json({ result });
 }
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

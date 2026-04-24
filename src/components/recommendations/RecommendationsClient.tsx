@@ -412,6 +412,7 @@ function HeroCarousel({
   );
 }
 
+// Основной экспортируемый компонент файла.
 export default function RecommendationsClient() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);

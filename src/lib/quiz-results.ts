@@ -25,6 +25,7 @@ type InsertQuizResultParams = {
   streak: number;
 };
 
+// Важный внутренний helper normalizeQuizResultRow для локальной логики.
 function normalizeQuizResultRow(row: Record<string, unknown>): StoredQuizResult {
   return {
     id: String(row.id),
@@ -42,6 +43,7 @@ function normalizeQuizResultRow(row: Record<string, unknown>): StoredQuizResult 
 
 let extendedQuizColumnsPromise: Promise<boolean> | null = null;
 
+// Важный внутренний helper hasExtendedQuizResultColumns для локальной логики.
 async function hasExtendedQuizResultColumns() {
   if (!extendedQuizColumnsPromise) {
     extendedQuizColumnsPromise = db.execute(sql<{ column_name: string }>`
@@ -55,6 +57,7 @@ async function hasExtendedQuizResultColumns() {
   return extendedQuizColumnsPromise;
 }
 
+// Публичная функция insertQuizResult для внешнего использования модуля.
 export async function insertQuizResult(params: InsertQuizResultParams) {
   const hasExtendedColumns = await hasExtendedQuizResultColumns();
   const id = crypto.randomUUID();
@@ -134,6 +137,7 @@ export async function insertQuizResult(params: InsertQuizResultParams) {
   return result.rows[0] ? normalizeQuizResultRow(result.rows[0] as Record<string, unknown>) : null;
 }
 
+// Публичная функция getQuizResultsByUser для внешнего использования модуля.
 export async function getQuizResultsByUser(userId: string, limit = 20) {
   const hasExtendedColumns = await hasExtendedQuizResultColumns();
   const pointsColumn = hasExtendedColumns ? sql`points` : sql`null::integer`;

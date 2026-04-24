@@ -40,6 +40,7 @@ function Avatar({ image, name }: { image?: string | null; name: string }) {
   );
 }
 
+// Основной экспортируемый компонент файла.
 export default function UserProfileClient({ profileUser, currentUserId, friendship, collection, isFriend }: Props) {
   const [currentFriendship, setCurrentFriendship] = useState(friendship);
   const [filter, setFilter] = useState<"all" | "movie" | "book" | "game">("all");

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+// Обрабатывает PATCH-запрос текущего API-маршрута.
 export async function PATCH(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });

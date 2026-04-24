@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { friendships, chatConversations, users } from "@/lib/db/schema";
 import { and, or, eq } from "drizzle-orm";
 
+// Публичная функция assertFriends для внешнего использования модуля.
 export async function assertFriends(userId: string, otherUserId: string) {
   const [friendship] = await db
     .select({ id: friendships.id })
@@ -16,10 +17,12 @@ export async function assertFriends(userId: string, otherUserId: string) {
   if (!friendship) throw new Error("NOT_FRIENDS");
 }
 
+// Публичная функция normalizePair для внешнего использования модуля.
 export function normalizePair(a: string, b: string) {
   return a < b ? [a, b] as const : [b, a] as const;
 }
 
+// Публичная функция getOrCreateConversation для внешнего использования модуля.
 export async function getOrCreateConversation(userId: string, otherUserId: string) {
   const [a, b] = normalizePair(userId, otherUserId);
 
@@ -38,6 +41,7 @@ export async function getOrCreateConversation(userId: string, otherUserId: strin
   return created;
 }
 
+// Публичная функция getUserBasic для внешнего использования модуля.
 export async function getUserBasic(userId: string) {
   const [u] = await db
     .select({ id: users.id, name: users.name, image: users.image, email: users.email })

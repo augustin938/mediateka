@@ -37,6 +37,7 @@ const SORT_OPTIONS = [
   { value: "rating_desc", label: "По рейтингу" },
 ];
 
+// Проверяет, проходит ли элемент выбранный период по году.
 function applyYearFilter(year: number | null, filter: string): boolean {
   if (!filter) return true;
   if (!year) return false;
@@ -55,6 +56,7 @@ interface SectionState {
   loadingMore: boolean;
 }
 
+// Основная секция поиска: запрос, фильтры, секции результатов и модалка карточки.
 export default function SearchSection({ initialQuery, initialType }: Props) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
   const [books, setBooks] = useState<SectionState>({ items: [], page: 1, hasMore: false, loadingMore: false });
   const [games, setGames] = useState<SectionState>({ items: [], page: 1, hasMore: false, loadingMore: false });
 
+  // Сбрасывает пагинацию и результаты во всех трёх секциях поиска.
   const resetSections = () => {
     setMovies({ items: [], page: 1, hasMore: false, loadingMore: false });
     setBooks({ items: [], page: 1, hasMore: false, loadingMore: false });
@@ -83,10 +86,12 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     setRecentSearches(readRecentSearches());
   }, []);
 
+  // Обновляет историю недавних поисковых запросов в localStorage.
   const pushRecent = (q: string) => {
     setRecentSearches((prev) => pushRecentSearch(prev, q));
   };
 
+  // Унифицированный поиск по API для фильмов/книг/игр с поддержкой дозагрузки.
   const search = useCallback(async (q: string, page = 1, append = false) => {
     if (q.length < 2) { resetSections(); setHasSearched(false); return; }
     if (!append) setLoading(true);
@@ -134,6 +139,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, typeFilter]);
 
+  // Догружает следующую страницу в конкретной секции (movie/book/game).
   const loadMore = async (type: "movie" | "book" | "game") => {
     const setter = type === "movie" ? setMovies : type === "book" ? setBooks : setGames;
     const state = type === "movie" ? movies : type === "book" ? books : games;
@@ -153,6 +159,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     }
   };
 
+  // Накладывает фильтр по году и сортировку на результаты секции.
   const applySort = (items: SearchResultItem[]) =>
     [...items]
       .filter((r) => applyYearFilter(r.year, yearFilter))
@@ -169,6 +176,7 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     { key: "game" as const, label: "Игры 🎮", state: games },
   ].filter((s) => typeFilter === "all" || typeFilter === s.key);
 
+  // Синхронизирует флаг "в коллекции" сразу во всех локальных списках и модалке.
   const handleAddToCollection = (item: SearchResultItem) => {
     [setMovies, setBooks, setGames].forEach((setter) => {
       setter((prev) => ({ 

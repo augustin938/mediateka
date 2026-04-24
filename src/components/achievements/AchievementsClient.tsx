@@ -37,6 +37,7 @@ const RARITY_STYLES = {
   legendary: { label: "Легендарное",border: "border-amber-500/40",   bg: "bg-amber-500/10",   text: "text-amber-400",   glow: "shadow-amber-500/30" },
 };
 
+// Важный внутренний helper buildAchievements для локальной логики.
 function buildAchievements(s: Stats): Achievement[] {
   return [
     {

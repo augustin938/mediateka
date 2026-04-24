@@ -28,18 +28,21 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+// Важный внутренний helper typeLabel для локальной логики.
 function typeLabel(type: "movie" | "book" | "game") {
   if (type === "movie") return "фильм";
   if (type === "book") return "книга";
   return "игра";
 }
 
+// Важный внутренний helper overlapScore для локальной логики.
 function overlapScore(sourceGenres: string[], targetGenres: string[]) {
   if (sourceGenres.length === 0 || targetGenres.length === 0) return 0;
   const set = new Set(sourceGenres.map((g) => g.toLowerCase()));
   return targetGenres.reduce((acc, g) => acc + (set.has(g.toLowerCase()) ? 1 : 0), 0);
 }
 
+// Обрабатывает GET-запрос текущего API-маршрута.
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

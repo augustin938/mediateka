@@ -19,6 +19,7 @@ interface RAWGSearchResult {
   count: number;
 }
 
+// Публичная функция searchRAWG для внешнего использования модуля.
 export async function searchRAWG(
   query: string
 ): Promise<Omit<MediaItem, "createdAt" | "updatedAt">[]> {
@@ -52,6 +53,7 @@ export async function searchRAWG(
   }));
 }
 
+// Публичная функция getRAWGDetails для внешнего использования модуля.
 export async function getRAWGDetails(
   gameId: string
 ): Promise<Partial<MediaItem> | null> {
