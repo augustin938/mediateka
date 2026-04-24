@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { chatConversations, chatMessages, chatMessageReactions, collectionItems, mediaItems, notifications, users } from "@/lib/db/schema";
+import { chatConversations, chatMessages, chatMessageReactions, collectionItems, mediaItems, users } from "@/lib/db/schema";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { assertFriends, getOrCreateConversation, normalizePair } from "@/lib/chat/server";
 import { publishConversationEvent } from "@/lib/chat/pubsub";
+import { createNotification } from "@/lib/notifications";
 
 function parseIntSafe(v: string | null, d: number) {
   const n = v ? parseInt(v, 10) : NaN;
@@ -156,15 +157,14 @@ export async function POST(req: NextRequest) {
       ? `Поделился: ${created.sharedTitle ?? "элементом из коллекции"}`
       : (text.length > 120 ? `${text.slice(0, 120)}…` : text);
 
-    await db.insert(notifications).values({
-      userId: toUserId,
-      type: "message",
+    await createNotification(
+      toUserId,
+      "message",
       title,
-      body: bodyText || "Новое сообщение",
-      read: false,
-      link: `/friends?chat=${session.user.id}`,
-      createdAt: new Date(),
-    });
+      bodyText || "Новое сообщение",
+      `/friends?chat=${session.user.id}`,
+      8_000
+    );
   } catch {
     // ignore notification errors
   }

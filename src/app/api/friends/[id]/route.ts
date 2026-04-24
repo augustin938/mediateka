@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { friendships, users, notifications } from "@/lib/db/schema";
+import { friendships, users } from "@/lib/db/schema";
 import { eq, and, or } from "drizzle-orm";
+import { createNotification } from "@/lib/notifications";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -26,13 +27,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // При принятии заявки уведомляем инициатора.
   if (status === "accepted") {
     const [accepter] = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id));
-    await db.insert(notifications).values({
-      userId: updated.requesterId,
-      type: "friend_accepted",
-      title: "Заявка принята!",
-      body: `${accepter?.name ?? "Пользователь"} принял твою заявку в друзья`,
-      link: `/user/${session.user.id}`,
-    });
+    await createNotification(
+      updated.requesterId,
+      "friend_accepted",
+      "Заявка принята!",
+      `${accepter?.name ?? "Пользователь"} принял твою заявку в друзья`,
+      `/user/${session.user.id}`,
+      30_000
+    );
   }
 
   return NextResponse.json({ friendship: updated });
