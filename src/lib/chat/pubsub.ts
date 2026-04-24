@@ -26,6 +26,10 @@ class TopicBus {
 
 const g = globalThis as any;
 export const chatBus: TopicBus = g.__mediateka_chatBus ?? (g.__mediateka_chatBus = new TopicBus());
+if (process.env.NODE_ENV === "production" && !g.__mediateka_chatBusWarned) {
+  g.__mediateka_chatBusWarned = true;
+  console.warn("[chat] In-memory pubsub is active. Realtime chat is not cross-instance.");
+}
 
 export function publishConversationEvent(conversationId: string, payload: any) {
   chatBus.emit(`conversation:${conversationId}`, payload);

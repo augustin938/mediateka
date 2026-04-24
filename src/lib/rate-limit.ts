@@ -1,5 +1,6 @@
 interface RateLimitEntry { count: number; resetTime: number; }
-const store = new Map<string, RateLimitEntry>();
+const g = globalThis as typeof globalThis & { __mediateka_rateLimitStore?: Map<string, RateLimitEntry> };
+const store = g.__mediateka_rateLimitStore ?? (g.__mediateka_rateLimitStore = new Map<string, RateLimitEntry>());
 
 if (typeof setInterval !== "undefined") {
   // Периодически очищаем устаревшие окна, чтобы Map не рос бесконечно.

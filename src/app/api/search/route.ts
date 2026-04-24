@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { limits } from "@/lib/rate-limit";
 
 function getEnvKey(name: string): string | null {
   const raw = process.env[name];
@@ -10,13 +11,17 @@ function getEnvKey(name: string): string | null {
 }
 
 export async function GET(req: NextRequest) {
+  const { success } = limits.search(req);
+  if (!success) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const q = req.nextUrl.searchParams.get("q")?.trim();
   const type = req.nextUrl.searchParams.get("type") ?? "all"; // movie | book | game | all
-  const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
-  const pageSize = 10;
+  const page = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1"));
+  const limitRaw = parseInt(req.nextUrl.searchParams.get("limit") ?? "10");
+  const pageSize = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 20) : 10;
   const kinopoiskApiKey = getEnvKey("KINOPOISK_API_KEY");
   const rawgApiKey = getEnvKey("RAWG_API_KEY");
 

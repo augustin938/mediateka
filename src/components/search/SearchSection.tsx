@@ -6,9 +6,7 @@ import MediaCard from "./MediaCard";
 import MediaCardSkeleton from "./MediaCardSkeleton";
 import MediaDetailModal from "@/components/modals/MediaDetailModal";
 import { cn } from "@/lib/utils";
-
-const RECENT_SEARCHES_KEY = "mediateka-recent-searches";
-const RECENT_SEARCHES_MAX = 8;
+import { pushRecentSearch, readRecentSearches } from "@/lib/recent-searches";
 const EXAMPLE_QUERIES = ["Интерстеллар", "Ведьмак 3", "Гарри Поттер", "Нолан", "Сапковский"];
 
 interface Props {
@@ -82,23 +80,11 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
   };
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
-      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-      if (Array.isArray(parsed)) {
-        setRecentSearches(parsed.filter((x) => typeof x === "string").slice(0, RECENT_SEARCHES_MAX));
-      }
-    } catch {}
+    setRecentSearches(readRecentSearches());
   }, []);
 
   const pushRecent = (q: string) => {
-    const cleaned = q.trim();
-    if (cleaned.length < 2) return;
-    setRecentSearches((prev) => {
-      const next = [cleaned, ...prev.filter((x) => x !== cleaned)].slice(0, RECENT_SEARCHES_MAX);
-      try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setRecentSearches((prev) => pushRecentSearch(prev, q));
   };
 
   const search = useCallback(async (q: string, page = 1, append = false) => {

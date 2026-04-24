@@ -16,6 +16,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const [msg] = await db.select().from(chatMessages).where(eq(chatMessages.id, id));
   if (!msg) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const [conversation] = await db
+    .select({ id: chatConversations.id })
+    .from(chatConversations)
+    .where(
+      and(
+        eq(chatConversations.id, msg.conversationId),
+        or(
+          eq(chatConversations.userAId, session.user.id),
+          eq(chatConversations.userBId, session.user.id)
+        )
+      )
+    );
+  if (!conversation) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   // Toggle reaction.
   const [existing] = await db

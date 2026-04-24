@@ -59,11 +59,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const parsed = addToCollectionSchema.safeParse(body);
-  console.log("Request body:", JSON.stringify(body, null, 2));
   if (!parsed.success) {
-  console.log("Validation error:", JSON.stringify(parsed.error.flatten(), null, 2));
-  return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-}
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
   const { mediaItemId, status, externalId, type, title, originalTitle, description,
     posterUrl, year, genres, externalRating, externalUrl, director, author, developer } = parsed.data;
@@ -79,14 +77,23 @@ export async function POST(req: NextRequest) {
     set: { title, posterUrl: posterUrl ?? null, updatedAt: new Date() },
   });
 
-  const [existing] = await db.select().from(collectionItems)
-    .where(and(eq(collectionItems.userId, session.user.id), eq(collectionItems.mediaItemId, mediaItemId)));
-
-  if (existing) return NextResponse.json({ error: "Already in collection", item: existing }, { status: 409 });
-
-  const [newItem] = await db.insert(collectionItems).values({
-    id: crypto.randomUUID(), userId: session.user.id, mediaItemId, status,
-  }).returning();
+  const [newItem] = await db
+    .insert(collectionItems)
+    .values({
+      id: crypto.randomUUID(),
+      userId: session.user.id,
+      mediaItemId,
+      status,
+    })
+    .onConflictDoNothing()
+    .returning();
+  if (!newItem) {
+    const [existing] = await db
+      .select()
+      .from(collectionItems)
+      .where(and(eq(collectionItems.userId, session.user.id), eq(collectionItems.mediaItemId, mediaItemId)));
+    return NextResponse.json({ error: "Already in collection", item: existing ?? null }, { status: 409 });
+  }
 
   // Сохраняем событие в ленту активности сразу после успешного добавления.
   const actionMap: Record<string, string> = {

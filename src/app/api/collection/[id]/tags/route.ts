@@ -49,6 +49,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params;
   const { tagId } = await req.json();
+  const [item] = await db
+    .select()
+    .from(collectionItems)
+    .where(and(eq(collectionItems.id, id), eq(collectionItems.userId, session.user.id)));
+  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.delete(collectionItemTags)
     .where(and(eq(collectionItemTags.collectionItemId, id), eq(collectionItemTags.tagId, tagId)));

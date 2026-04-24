@@ -5,12 +5,15 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { friendships, users } from "@/lib/db/schema";
 import { eq, or, and } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const uid = session.user.id;
+  const requester = alias(users, "requester");
+  const addressee = alias(users, "addressee");
 
   const all = await db
     .select({
@@ -19,18 +22,17 @@ export async function GET(req: NextRequest) {
       requesterId: friendships.requesterId,
       addresseeId: friendships.addresseeId,
       createdAt: friendships.createdAt,
-      requester: { id: users.id, name: users.name, image: users.image, email: users.email },
+      requester: { id: requester.id, name: requester.name, image: requester.image, email: requester.email },
+      addressee: { id: addressee.id, name: addressee.name, image: addressee.image, email: addressee.email },
     })
     .from(friendships)
-    .innerJoin(users, eq(users.id, friendships.requesterId))
+    .innerJoin(requester, eq(requester.id, friendships.requesterId))
+    .innerJoin(addressee, eq(addressee.id, friendships.addresseeId))
     .where(or(eq(friendships.requesterId, uid), eq(friendships.addresseeId, uid)));
 
-  // Добавляем данные адресата, чтобы в ответе были обе стороны заявки.
-  const enriched = await Promise.all(all.map(async (f) => {
-    const otherId = f.requesterId === uid ? f.addresseeId : f.requesterId;
-    const [other] = await db.select({ id: users.id, name: users.name, image: users.image, email: users.email })
-      .from(users).where(eq(users.id, otherId));
-    return { ...f, other };
+  const enriched = all.map((f) => ({
+    ...f,
+    other: f.requesterId === uid ? f.addressee : f.requester,
   }));
 
   const friends = enriched.filter((f) => f.status === "accepted");

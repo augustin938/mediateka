@@ -17,6 +17,18 @@ const nextConfig = {
   },
 
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
+    const csp = [
+      "default-src 'self'",
+      isProd
+        ? "script-src 'self' 'unsafe-inline'"
+        : "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https:",
+      "frame-ancestors 'self'",
+    ].join("; ");
     return [
       {
         source: "/(.*)",
@@ -39,16 +51,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              // Без unsafe-eval dev-сборка Next.js ломается из-за eval в tooling.
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https:",
-              "connect-src 'self' https:",
-              "frame-ancestors 'self'",
-            ].join("; "),
+            value: csp,
           },
         ],
       },
