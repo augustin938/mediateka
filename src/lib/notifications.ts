@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 
 export async function createNotification(
   userId: string,
@@ -21,7 +21,7 @@ export async function createNotification(
           eq(notifications.type, type),
           eq(notifications.title, title),
           eq(notifications.body, body),
-          eq(notifications.link, link ?? null),
+          link ? eq(notifications.link, link) : isNull(notifications.link),
           gt(notifications.createdAt, threshold)
         )
       )
