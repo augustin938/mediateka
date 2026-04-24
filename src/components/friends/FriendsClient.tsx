@@ -36,6 +36,7 @@ type ChatMessage = {
   createdAt: string;
   deletedAt: string | null;
   deleted: boolean;
+  reactions?: { emoji: string; count: number; mine: boolean }[];
 };
 
 function Avatar({ image, name, size = 40 }: { image?: string | null; name: string; size?: number }) {
@@ -125,6 +126,55 @@ function ChatDrawer({
     }
     if (payload?.type === "message:deleted" && payload.messageId) {
       setMessages((prev) => prev.map((m) => m.id === payload.messageId ? { ...m, deleted: true, deletedAt: payload.deletedAt ?? new Date().toISOString(), text: null, sharedTitle: null, sharedType: null, sharedYear: null, sharedPosterUrl: null } : m));
+    }
+    if (payload?.type === "reaction:added" && payload.messageId && payload.emoji) {
+      setMessages((prev) => prev.map((m) => {
+        if (m.id !== payload.messageId) return m;
+        const reactions = [...(m.reactions ?? [])];
+        const idx = reactions.findIndex((r) => r.emoji === payload.emoji);
+        if (idx === -1) {
+          reactions.push({ emoji: payload.emoji, count: 1, mine: payload.userId === meId });
+        } else {
+          reactions[idx] = {
+            ...reactions[idx],
+            count: reactions[idx].count + 1,
+            mine: reactions[idx].mine || payload.userId === meId,
+          };
+        }
+        return { ...m, reactions };
+      }));
+    }
+    if (payload?.type === "reaction:removed" && payload.messageId && payload.emoji) {
+      setMessages((prev) => prev.map((m) => {
+        if (m.id !== payload.messageId) return m;
+        const reactions = [...(m.reactions ?? [])];
+        const idx = reactions.findIndex((r) => r.emoji === payload.emoji);
+        if (idx === -1) return m;
+        const nextCount = reactions[idx].count - 1;
+        if (nextCount <= 0) {
+          reactions.splice(idx, 1);
+        } else {
+          reactions[idx] = {
+            ...reactions[idx],
+            count: nextCount,
+            mine: payload.userId === meId ? false : reactions[idx].mine,
+          };
+        }
+        return { ...m, reactions };
+      }));
+    }
+  };
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    try {
+      const res = await fetch(`/api/chat/messages/${messageId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error("Не удалось обновить реакцию");
     }
   };
 
@@ -310,6 +360,36 @@ function ChatDrawer({
                     </div>
                   ) : (
                     <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.text}</p>
+                  )}
+
+                  {!m.deleted && (
+                    <div className={cn("mt-2 flex items-center gap-1.5 flex-wrap", mine ? "justify-end" : "justify-start")}>
+                      {(m.reactions ?? []).map((r) => (
+                        <button
+                          key={`${m.id}-${r.emoji}`}
+                          onClick={() => toggleReaction(m.id, r.emoji)}
+                          className={cn(
+                            "text-xs px-2 py-0.5 rounded-full border transition-all",
+                            r.mine
+                              ? "border-primary/40 bg-primary/20 text-primary"
+                              : "border-border/70 bg-muted/30 text-foreground/80 hover:border-primary/30"
+                          )}
+                          title="Переключить реакцию"
+                        >
+                          {r.emoji} {r.count}
+                        </button>
+                      ))}
+                      {["👍", "🔥", "❤️"].map((emoji) => (
+                        <button
+                          key={`${m.id}-add-${emoji}`}
+                          onClick={() => toggleReaction(m.id, emoji)}
+                          className="text-xs px-2 py-0.5 rounded-full border border-border/60 bg-card/30 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+                          title={`Реакция ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   {mine && !m.deleted && (
