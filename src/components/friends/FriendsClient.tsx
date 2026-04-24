@@ -289,20 +289,23 @@ function ChatDrawer({
                             {(m.sharedType ?? "").toString()} {m.sharedYear ?? ""}
                           </p>
                         </div>
-                        {(ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)) && (
-                          <span className="text-[10px] px-2 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 whitespace-nowrap">
-                            ✓ Уже в коллекции
-                          </span>
-                        )}
-                        <button
-                          onClick={() => addSharedToCollection(m)}
-                          disabled={ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)}
-                          className="text-[11px] px-2 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary opacity-0 group-hover/share:opacity-100 transition-opacity whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) || ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`)
-                            ? "Уже добавлено"
-                            : "+ В коллекцию"}
-                        </button>
+                        {(() => {
+                          const alreadyOwned =
+                            ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::${m.sharedYear ?? ""}`) ||
+                            ownedShareKeys.has(`${m.sharedType}::${m.sharedTitle}::`);
+                          return alreadyOwned ? (
+                            <span className="text-[10px] px-2 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 whitespace-nowrap">
+                              ✓ Уже в коллекции
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => addSharedToCollection(m)}
+                              className="text-[11px] px-2 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary opacity-0 group-hover/share:opacity-100 transition-opacity whitespace-nowrap"
+                            >
+                              + В коллекцию
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   ) : (
