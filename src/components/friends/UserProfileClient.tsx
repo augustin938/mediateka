@@ -207,7 +207,7 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
       {achOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setAchOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-          <div className="relative glass w-full sm:max-w-5xl max-h-[92vh] sm:max-h-[86vh] rounded-t-3xl sm:rounded-2xl overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="relative glass w-full sm:max-w-5xl max-h-[92vh] sm:max-h-[86vh] rounded-t-3xl sm:rounded-2xl overflow-hidden animate-fade-in flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b border-border/60 flex items-center justify-between">
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">Достижения — {profileUser.name}</p>
@@ -215,7 +215,7 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
               </div>
               <button className="w-9 h-9 rounded-xl border border-border/70 hover:bg-muted/40 transition-all focus-ring" onClick={() => setAchOpen(false)}>✕</button>
             </div>
-            <div className="p-4 overflow-y-auto">
+            <div className="p-4 overflow-y-auto flex-1 min-h-0">
               {achLoading || !achStats ? (
                 <div className="text-center py-16 text-sm text-muted-foreground">
                   <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
