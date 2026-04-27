@@ -256,7 +256,7 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
           {isAccepted ? (
             <div className="flex items-center gap-2">
               <Link
-                href={`/friends?chat=${profileUser.id}`}
+                href={`/friends?chat=${profileUser.id}&source=profile`}
                 className="text-sm bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl transition-colors"
               >
                 💬 Чат

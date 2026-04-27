@@ -476,6 +476,13 @@ export default function FriendsClient({ currentUserId }: { currentUserId: string
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
+    // Если чат открыт из профиля пользователя, не уводим интерфейс на вкладку "Друзья".
+    if (searchParams.get("chat") && searchParams.get("source") === "profile") {
+      setActiveTab("search");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const chatId = searchParams.get("chat");
     if (!chatId || friends.length === 0) return;
     const target = friends.find((f) => f.other.id === chatId);
