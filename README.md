@@ -212,16 +212,6 @@ chat_message_reaction — Реакции на сообщения
 quiz_result     — Результаты квиза
 ```
 
-## Деплой на Vercel
-
-```bash
-# 1. Создать проект на Vercel
-# 2. Подключить Neon Postgres (из Vercel Marketplace)
-# 3. Добавить все env-переменные
-# 4. Задеплоить
-
-vercel deploy --prod
-```
 
 ## Получение API ключей
 
