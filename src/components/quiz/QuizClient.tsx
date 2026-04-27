@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type QType = "description" | "year" | "genre" | "rating" | "poster" | "poster_reveal" | "creator";
@@ -442,19 +443,25 @@ export default function QuizClient() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState<string | null>(null);
+  const [notEnoughInfo, setNotEnoughInfo] = useState<{ min: number; total: number } | null>(null);
   const correctAnswers = history.filter((item) => item.correct).length;
 
+  // Загружает вопросы квиза; возвращает true, если игру можно запустить.
   const fetchQuestions = useCallback(async (m: Mode, cat: Cat, append = false) => {
     setLoading(true);
     setError(null);
+    if (!append) setNotEnoughInfo(null);
     try {
       const count = m === "endless" ? 5 : 10;
       const res   = await fetch(`/api/quiz?category=${cat}&count=${count}`);
       const data  = await res.json();
       if (data.error === "not_enough") {
-        setError("Недостаточно завершённых элементов в коллекции. Добавь хотя бы 4!");
+        const minRequired = Number(data.min ?? 4);
+        const currentTotal = Number(data.total ?? 0);
+        setNotEnoughInfo({ min: minRequired, total: currentTotal });
+        setError(`Недостаточно завершённых элементов в коллекции. Нужно минимум ${minRequired}.`);
         setLoading(false);
-        return;
+        return false;
       }
       if (append) {
         setQuestions((prev) => [...prev, ...data.questions.map((q: Question, i: number) => ({ ...q, id: prev.length + i }))]);
@@ -462,18 +469,22 @@ export default function QuizClient() {
         setQuestions(data.questions);
         setQIndex(0);
       }
+      setLoading(false);
+      return true;
     } catch {
       setError("Ошибка загрузки вопросов");
+      setLoading(false);
+      return false;
     }
-    setLoading(false);
   }, []);
 
   const handleStart = useCallback(async (m: Mode, cat: Cat) => {
     setMode(m); setCategory(cat);
     setScore(0); setStreak(0); setBestStreak(0);
     setLives(3); setHistory([]); setAnswered(null); setIsCorrect(null);
-    await fetchQuestions(m, cat, false);
-    setPhase("playing");
+    const canStart = await fetchQuestions(m, cat, false);
+    if (canStart) setPhase("playing");
+    else setPhase("setup");
   }, [fetchQuestions]);
 
   const handleAnswer = useCallback((ans: string, timeLeft: number) => {
@@ -524,7 +535,30 @@ export default function QuizClient() {
   if (phase === "setup") {
     return (
       <div className="max-w-lg mx-auto">
-        {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
+        {error && (
+          <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-center space-y-3">
+            <p className="text-red-300">{error}</p>
+            {notEnoughInfo && (
+              <p className="text-xs text-red-200/90">
+                Сейчас завершено: <b>{notEnoughInfo.total}</b> из <b>{notEnoughInfo.min}</b> необходимых.
+              </p>
+            )}
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
+              >
+                ➕ Добавить в коллекцию
+              </Link>
+              <Link
+                href="/collection"
+                className="inline-flex items-center justify-center rounded-xl border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                📚 Открыть коллекцию
+              </Link>
+            </div>
+          </div>
+        )}
         <SetupScreen onStart={handleStart} />
       </div>
     );
@@ -551,7 +585,19 @@ export default function QuizClient() {
   }
 
   const currentQ = questions[qIndex];
-  if (!currentQ) return null;
+  if (!currentQ) {
+    return (
+      <div className="max-w-lg mx-auto rounded-2xl border border-border bg-card/50 p-6 text-center space-y-3">
+        <p className="text-sm text-muted-foreground">Вопросы не загружены. Вернись в настройки и попробуй снова.</p>
+        <button
+          onClick={() => setPhase("setup")}
+          className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+        >
+          ← К настройкам
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto">
