@@ -39,7 +39,7 @@ export async function GET(req: Request) {
     : rows.filter((row) => row.media_item.type === category);
 
   if (filteredRows.length < 4) {
-    return NextResponse.json({ error: "not_enough", min: 4 });
+    return NextResponse.json({ error: "not_enough", min: 4, total: filteredRows.length });
   }
 
   const pool      = [...filteredRows].sort(() => Math.random() - 0.5).slice(0, count);
