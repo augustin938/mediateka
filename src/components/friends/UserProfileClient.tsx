@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS, STATUS_LABELS, STATUS_COLORS } from "@/types";
@@ -40,6 +39,201 @@ function Avatar({ image, name }: { image?: string | null; name: string }) {
   );
 }
 
+type ChatMessage = {
+  id: string;
+  senderId: string;
+  type: "text" | "share";
+  text: string | null;
+  createdAt: string;
+  deleted: boolean;
+  deletedAt: string | null;
+};
+
+// Чат-окно поверх страницы профиля: открывается без перехода на вкладку друзей.
+function ProfileChatDrawer({
+  open,
+  onClose,
+  meId,
+  friend,
+}: {
+  open: boolean;
+  onClose: () => void;
+  meId: string;
+  friend: ProfileUser;
+}) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState("");
+  const esRef = useRef<EventSource | null>(null);
+  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  };
+
+  const loadMessages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/chat/messages?with=${encodeURIComponent(friend.id)}&limit=60`);
+      const data = await res.json();
+      const rows: ChatMessage[] = (data.messages ?? []).slice().reverse();
+      setMessages(rows.map((m) => ({ ...m, deleted: Boolean((m as any).deletedAt) })));
+      setTimeout(scrollToBottom, 50);
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [friend.id]);
+
+  const applyEvent = (payload: any) => {
+    if (payload?.type === "message:new" && payload.message) {
+      const msg = payload.message as ChatMessage;
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        return [...prev, { ...msg, deleted: Boolean((msg as any).deletedAt) }];
+      });
+      setTimeout(scrollToBottom, 50);
+    }
+    if (payload?.type === "message:deleted" && payload.messageId) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === payload.messageId
+            ? { ...m, deleted: true, deletedAt: payload.deletedAt ?? new Date().toISOString(), text: null }
+            : m
+        )
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    loadMessages();
+  }, [open, loadMessages]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    const connect = () => {
+      esRef.current?.close();
+      const es = new EventSource(`/api/chat/stream?with=${encodeURIComponent(friend.id)}`);
+      es.addEventListener("chat", (e: MessageEvent) => {
+        try { applyEvent(JSON.parse(e.data)); } catch {}
+      });
+      es.onerror = () => {
+        es.close();
+        if (!active) return;
+        reconnectRef.current = setTimeout(connect, 1000);
+      };
+      esRef.current = es;
+    };
+    connect();
+    return () => {
+      active = false;
+      esRef.current?.close();
+      esRef.current = null;
+      if (reconnectRef.current) clearTimeout(reconnectRef.current);
+      reconnectRef.current = null;
+    };
+  }, [open, friend.id]);
+
+  const send = async () => {
+    const t = text.trim();
+    if (!t) return;
+    setText("");
+    try {
+      const res = await fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toUserId: friend.id, text: t }),
+      });
+      const data = await res.json();
+      if (res.ok && data.message) {
+        const msg = data.message as ChatMessage;
+        setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, { ...msg, deleted: Boolean((msg as any).deletedAt) }]));
+        setTimeout(scrollToBottom, 30);
+      } else {
+        toast.error("Не удалось отправить сообщение");
+      }
+    } catch {
+      toast.error("Не удалось отправить сообщение");
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[420px] bg-background/85 backdrop-blur-xl border-l border-border/70 flex flex-col">
+        <div className="h-14 px-4 flex items-center gap-3 border-b border-border/60">
+          <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+            <Avatar image={friend.image} name={friend.name} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground truncate">{friend.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{friend.email}</p>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl border border-border/70 hover:border-primary/30 hover:bg-muted/40 transition-all focus-ring">
+            ✕
+          </button>
+        </div>
+
+        <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-2">
+          {loading && <div className="text-center text-sm text-muted-foreground py-6">Загрузка…</div>}
+          {!loading && messages.length === 0 && (
+            <div className="text-center text-sm text-muted-foreground py-10 space-y-2">
+              <div className="text-3xl">💬</div>
+              <p>Напиши первое сообщение</p>
+            </div>
+          )}
+
+          {messages.map((m) => {
+            const mine = m.senderId === meId;
+            return (
+              <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 border", mine ? "bg-primary/15 border-primary/20" : "bg-card/40 border-border/70")}>
+                  {m.deleted ? (
+                    <p className="text-xs text-muted-foreground italic">Сообщение удалено</p>
+                  ) : m.type === "share" ? (
+                    <p className="text-sm text-foreground">📎 Поделился элементом из коллекции</p>
+                  ) : (
+                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{m.text}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="p-3 border-t border-border/60">
+          <div className="flex items-end gap-2">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder="Сообщение…"
+              className="flex-1 min-h-[44px] max-h-32 resize-none bg-card/40 border border-border/70 rounded-xl px-3 py-2 text-sm text-foreground focus-ring"
+            />
+            <button onClick={send} className="btn-primary focus-ring interactive-soft">
+              Отправить
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">Enter — отправить · Shift+Enter — новая строка</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Основной экспортируемый компонент файла.
 export default function UserProfileClient({ profileUser, currentUserId, friendship, collection, isFriend }: Props) {
   const [currentFriendship, setCurrentFriendship] = useState(friendship);
@@ -51,6 +245,7 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
   const [achOpen, setAchOpen] = useState(false);
   const [achLoading, setAchLoading] = useState(false);
   const [achStats, setAchStats] = useState<any | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!isFriend) return;
@@ -255,12 +450,12 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
         <div className="flex-shrink-0">
           {isAccepted ? (
             <div className="flex items-center gap-2">
-              <Link
-                href={`/friends?chat=${profileUser.id}&source=profile`}
+              <button
+                onClick={() => setChatOpen(true)}
                 className="text-sm bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl transition-colors"
               >
                 💬 Чат
-              </Link>
+              </button>
               <button
                 onClick={openAchievements}
                 className="text-sm bg-amber-500/10 hover:bg-amber-500/15 text-amber-300 border border-amber-500/25 px-4 py-2 rounded-xl transition-colors"
@@ -381,6 +576,12 @@ export default function UserProfileClient({ profileUser, currentUserId, friendsh
           )}
         </div>
       )}
+      <ProfileChatDrawer
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        meId={currentUserId}
+        friend={profileUser}
+      />
     </div>
   );
 }
