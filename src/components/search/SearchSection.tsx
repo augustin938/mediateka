@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SearchResultItem } from "@/types";
 import MediaCard from "./MediaCard";
 import MediaCardSkeleton from "./MediaCardSkeleton";
@@ -12,6 +13,8 @@ const EXAMPLE_QUERIES = ["Интерстеллар", "Ведьмак 3", "Гар
 interface Props {
   initialQuery?: string;
   initialType?: string;
+  initialYear?: string;
+  initialSort?: string;
 }
 
 const TYPE_OPTIONS = [
@@ -57,7 +60,15 @@ interface SectionState {
 }
 
 // Основная секция поиска: запрос, фильтры, секции результатов и модалка карточки.
-export default function SearchSection({ initialQuery, initialType }: Props) {
+export default function SearchSection({
+  initialQuery,
+  initialType,
+  initialYear,
+  initialSort,
+}: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState(initialQuery ?? "");
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null);
@@ -67,9 +78,10 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const [typeFilter, setTypeFilter] = useState(initialType ?? "all");
-  const [yearFilter, setYearFilter] = useState("");
-  const [sortBy, setSortBy] = useState("relevance");
+  const [yearFilter, setYearFilter] = useState(initialYear ?? "");
+  const [sortBy, setSortBy] = useState(initialSort ?? "relevance");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const didInitUrlSync = useRef(false);
 
   const [movies, setMovies] = useState<SectionState>({ items: [], page: 1, hasMore: false, loadingMore: false });
   const [books, setBooks] = useState<SectionState>({ items: [], page: 1, hasMore: false, loadingMore: false });
@@ -86,10 +98,39 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
     setRecentSearches(readRecentSearches());
   }, []);
 
+  useEffect(() => {
+    setQuery(initialQuery ?? "");
+    setTypeFilter(initialType ?? "all");
+    setYearFilter(initialYear ?? "");
+    setSortBy(initialSort ?? "relevance");
+  }, [initialQuery, initialType, initialYear, initialSort]);
+
   // Обновляет историю недавних поисковых запросов в localStorage.
   const pushRecent = (q: string) => {
     setRecentSearches((prev) => pushRecentSearch(prev, q));
   };
+
+  const syncUrl = useCallback(
+    (next: { q: string; type: string; year: string; sort: string }) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (next.q.trim().length >= 2) params.set("q", next.q.trim());
+      else params.delete("q");
+
+      if (next.type && next.type !== "all") params.set("type", next.type);
+      else params.delete("type");
+
+      if (next.year) params.set("year", next.year);
+      else params.delete("year");
+
+      if (next.sort && next.sort !== "relevance") params.set("sort", next.sort);
+      else params.delete("sort");
+
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
 
   // Унифицированный поиск по API для фильмов/книг/игр с поддержкой дозагрузки.
   const search = useCallback(async (q: string, page = 1, append = false) => {
@@ -135,9 +176,17 @@ export default function SearchSection({ initialQuery, initialType }: Props) {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { resetSections(); search(query); }, 400);
+    debounceRef.current = setTimeout(() => {
+      resetSections();
+      search(query);
+      if (didInitUrlSync.current) {
+        syncUrl({ q: query, type: typeFilter, year: yearFilter, sort: sortBy });
+      } else {
+        didInitUrlSync.current = true;
+      }
+    }, 400);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query, typeFilter]);
+  }, [query, typeFilter, yearFilter, sortBy, search, syncUrl]);
 
   // Догружает следующую страницу в конкретной секции (movie/book/game).
   const loadMore = async (type: "movie" | "book" | "game") => {

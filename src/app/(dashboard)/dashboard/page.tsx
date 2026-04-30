@@ -12,15 +12,21 @@ export const metadata: Metadata = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; year?: string; sort?: string }>;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
-  const { q, type } = await searchParams;
+  const { q, type, year, sort } = await searchParams;
 
   return (
     <div className="space-y-10">
       <AnimatedHeadline name={session?.user?.name ?? "пользователь"} />
-      <SearchSection key={q ?? ""} initialQuery={q} initialType={type} />
+      <SearchSection
+        key={[q ?? "", type ?? "all", year ?? "", sort ?? "relevance"].join(":")}
+        initialQuery={q}
+        initialType={type}
+        initialYear={year}
+        initialSort={sort}
+      />
     </div>
   );
 }
