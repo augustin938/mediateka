@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
-interface FriendUser {
+export interface FriendUser {
   id: string;
   name: string;
   email: string;
@@ -54,7 +55,7 @@ function Avatar({ image, name, size = 40 }: { image?: string | null; name: strin
 }
 
 // Боковая панель чата с SSE-обновлениями, реакциями и шарингом медиа.
-function ChatDrawer({
+export function ChatDrawer({
   open,
   onClose,
   meId,
@@ -65,6 +66,7 @@ function ChatDrawer({
   meId: string;
   friend: FriendUser | null;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
@@ -75,6 +77,10 @@ function ChatDrawer({
   const listRef = useRef<HTMLDivElement>(null);
 
   const friendId = friend?.id ?? null;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Прокручивает список сообщений к последнему элементу.
   const scrollToBottom = () => {
@@ -292,9 +298,9 @@ function ChatDrawer({
     }
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[420px] bg-background/85 backdrop-blur-xl border-l border-border/70 flex flex-col">
@@ -442,7 +448,8 @@ function ChatDrawer({
           <p className="text-[10px] text-muted-foreground mt-1">Enter — отправить · Shift+Enter — новая строка</p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

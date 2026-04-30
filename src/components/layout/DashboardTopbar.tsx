@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { MEDIA_TYPE_ICONS } from "@/types";
 import NotificationsBell from "@/components/notifications/NotificationsBell";
 import { pushRecentSearch, readRecentSearches } from "@/lib/recent-searches";
+import { ChatDrawer } from "@/components/friends/FriendsClient";
+import type { FriendUser } from "@/components/friends/FriendsClient";
 
 interface SearchResult {
   id: string;
@@ -13,13 +15,6 @@ interface SearchResult {
   title: string;
   year: number | null;
   posterUrl: string | null;
-}
-
-interface FriendUser {
-  id: string;
-  name: string;
-  email: string;
-  image: string | null;
 }
 
 interface FriendEntry {
@@ -154,7 +149,7 @@ const THEMES = [
 
 type ThemeId = typeof THEMES[number]["id"];
 
-function ChatFriendsMenu() {
+function ChatFriendsMenu({ onOpenChat }: { onOpenChat: (friend: FriendUser) => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -231,7 +226,7 @@ function ChatFriendsMenu() {
                   key={f.id}
                   onClick={() => {
                     setOpen(false);
-                    router.push(`/friends?chat=${encodeURIComponent(f.other.id)}`);
+                    onOpenChat(f.other);
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 border-b border-border/50 last:border-0 transition-colors focus-ring"
                 >
@@ -366,7 +361,7 @@ function ThemePicker() {
 }
 
 // Верхняя панель: быстрый поиск, навигация, тема и уведомления.
-export default function DashboardTopbar() {
+export default function DashboardTopbar({ currentUserId }: { currentUserId: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -375,6 +370,8 @@ export default function DashboardTopbar() {
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatFriend, setChatFriend] = useState<FriendUser | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -590,10 +587,21 @@ export default function DashboardTopbar() {
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <ChatFriendsMenu />
+        <ChatFriendsMenu
+          onOpenChat={(friend) => {
+            setChatFriend(friend);
+            setChatOpen(true);
+          }}
+        />
         <NotificationsBell />
         <ThemePicker />
       </div>
+      <ChatDrawer
+        open={chatOpen}
+        friend={chatFriend}
+        meId={currentUserId}
+        onClose={() => setChatOpen(false)}
+      />
     </header>
   );
 }

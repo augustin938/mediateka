@@ -16,7 +16,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen flex">
       <DashboardSidebar user={session.user} />
       <div className="flex-1 flex flex-col min-w-0">
-        <DashboardTopbar />
+        <DashboardTopbar currentUserId={session.user.id} />
         <main className="flex-1 px-4 sm:px-6 py-6">
           {children}
         </main>
