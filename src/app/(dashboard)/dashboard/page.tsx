@@ -21,7 +21,6 @@ export default async function DashboardPage({
     <div className="space-y-10">
       <AnimatedHeadline name={session?.user?.name ?? "пользователь"} />
       <SearchSection
-        key={[q ?? "", type ?? "all", year ?? "", sort ?? "relevance"].join(":")}
         initialQuery={q}
         initialType={type}
         initialYear={year}

@@ -15,6 +15,18 @@ interface SearchResult {
   posterUrl: string | null;
 }
 
+interface FriendUser {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+}
+
+interface FriendEntry {
+  id: string;
+  other: FriendUser;
+}
+
 type QuickLink = { href: string; label: string; icon: string };
 const QUICK_LINKS: QuickLink[] = [
   { href: "/dashboard", label: "Поиск", icon: "🔍" },
@@ -141,6 +153,112 @@ const THEMES = [
 ] as const;
 
 type ThemeId = typeof THEMES[number]["id"];
+
+function ChatFriendsMenu() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [friends, setFriends] = useState<FriendEntry[]>([]);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const loadFriends = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/friends");
+      const data = await res.json();
+      setFriends(data.friends ?? []);
+    } catch {
+      setFriends([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleOpen = () => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) void loadFriends();
+      return next;
+    });
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={toggleOpen}
+        title="Чаты"
+        className={cn(
+          "relative text-muted-foreground hover:text-foreground border border-border/70 hover:border-border px-3 py-1.5 rounded-lg transition-all duration-200 bg-card/30 backdrop-blur-md focus-ring",
+          open && "border-primary/30 text-foreground shadow-glow-sm"
+        )}
+      >
+        💬
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border shadow-2xl z-50 overflow-hidden bg-card/90 backdrop-blur-xl">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+            <h3 className="font-semibold text-foreground text-sm">Чаты</h3>
+            <button
+              onClick={() => router.push("/friends")}
+              className="text-xs text-primary hover:underline focus-ring rounded-md px-1.5 py-1"
+            >
+              Все друзья
+            </button>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto bg-card">
+            {loading ? (
+              <div className="p-5 text-center">
+                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+              </div>
+            ) : friends.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground space-y-2 bg-card">
+                <div className="text-3xl">👥</div>
+                <p className="text-sm">Друзей пока нет</p>
+              </div>
+            ) : (
+              friends.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => {
+                    setOpen(false);
+                    router.push(`/friends?chat=${encodeURIComponent(f.other.id)}`);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 border-b border-border/50 last:border-0 transition-colors focus-ring"
+                >
+                  <div className="w-9 h-9 rounded-xl overflow-hidden bg-muted/40 flex items-center justify-center flex-shrink-0">
+                    {f.other.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={f.other.image} alt={f.other.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-foreground/80 font-semibold">
+                        {f.other.name?.slice(0, 2).toUpperCase() || "?"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{f.other.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{f.other.email}</p>
+                  </div>
+                  <span className="text-xs text-primary">Открыть</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Применяет тему: классы, CSS-переменные и синхронизацию с next-themes.
 function applyTheme(id: ThemeId) {
@@ -311,16 +429,27 @@ export default function DashboardTopbar() {
 
   useEffect(() => {
     if (searchQuery.length < 2) { setSearchResults([]); return; }
+    const normalizedQuery = searchQuery.trim();
+    if (normalizedQuery.length < 2) { setSearchResults([]); return; }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=6`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(normalizedQuery)}&limit=6`, {
+          signal: controller.signal,
+        });
         const data = await res.json();
         setSearchResults(data.results ?? []);
-      } catch { setSearchResults([]); }
+      } catch (e) {
+        if ((e as { name?: string })?.name === "AbortError") return;
+        setSearchResults([]);
+      }
       finally { setSearching(false); }
     }, 350);
-    return () => clearTimeout(timer);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   return (
@@ -461,6 +590,7 @@ export default function DashboardTopbar() {
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
+        <ChatFriendsMenu />
         <NotificationsBell />
         <ThemePicker />
       </div>

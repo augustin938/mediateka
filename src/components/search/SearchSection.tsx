@@ -75,6 +75,7 @@ export default function SearchSection({
   const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const requestSeqRef = useRef(0);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const [typeFilter, setTypeFilter] = useState(initialType ?? "all");
@@ -134,11 +135,25 @@ export default function SearchSection({
 
   // Унифицированный поиск по API для фильмов/книг/игр с поддержкой дозагрузки.
   const search = useCallback(async (q: string, page = 1, append = false) => {
-    if (q.length < 2) { resetSections(); setHasSearched(false); return; }
+    const normalizedQuery = q.trim();
+    if (normalizedQuery.length < 2) {
+      controllerRef.current?.abort();
+      resetSections();
+      setLoading(false);
+      setHasSearched(false);
+      return;
+    }
     if (!append) setLoading(true);
     setHasSearched(true);
 
     const types = typeFilter === "all" ? ["movie", "book", "game"] : [typeFilter];
+    const reqId = ++requestSeqRef.current;
+
+    if (!append) {
+      setMovies({ items: [], page: 1, hasMore: false, loadingMore: false });
+      setBooks({ items: [], page: 1, hasMore: false, loadingMore: false });
+      setGames({ items: [], page: 1, hasMore: false, loadingMore: false });
+    }
 
     controllerRef.current?.abort();
     const controller = new AbortController();
@@ -147,10 +162,11 @@ export default function SearchSection({
     await Promise.all(types.map(async (t) => {
       try {
         const res = await fetch(
-          `/api/search?q=${encodeURIComponent(q)}&type=${t}&page=${page}`,
+          `/api/search?q=${encodeURIComponent(normalizedQuery)}&type=${t}&page=${page}`,
           { signal: controller.signal }
         );
         const data = await res.json();
+        if (requestSeqRef.current !== reqId) return;
         const newItems: SearchResultItem[] = data.results ?? [];
         const hasMore: boolean = data.hasMore ?? false;
 
@@ -166,8 +182,9 @@ export default function SearchSection({
       }
     }));
 
+    if (requestSeqRef.current !== reqId) return;
     setLoading(false);
-    pushRecent(q);
+    pushRecent(normalizedQuery);
   }, [typeFilter]);
 
   useEffect(() => {
@@ -177,7 +194,6 @@ export default function SearchSection({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      resetSections();
       search(query);
       if (didInitUrlSync.current) {
         syncUrl({ q: query, type: typeFilter, year: yearFilter, sort: sortBy });
